@@ -1,5 +1,5 @@
 package com.leanx.app.model;
 
-public class Employee {
+public class UserRole {
     
 }

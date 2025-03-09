@@ -1,12 +1,12 @@
-package main.java.com.leanx.app.repository.impl;
+package com.leanx.app.repository;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import main.java.com.leanx.app.model.User;
-import main.java.com.leanx.app.repository.UserRepository;
 
-public class UserRepositoryImpl implements UserRepository  {
+import com.leanx.app.model.User;
+
+public class UserCrudRepository implements CrudRepository<User>  {
 
     @Override
     public void create(User user) throws IllegalArgumentException, SQLException {
@@ -33,9 +33,19 @@ public class UserRepositoryImpl implements UserRepository  {
     }
 
     @Override
-    public List<User> findAll() throws SQLException {
+    public List<User> getAll() throws SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findAll'");
     }
-    
+
+    public User getUserByUsername(String username) throws IllegalArgumentException, SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getUserByUsername'");
+    }
+
+    public List<User> getAllUsersLinkedToEmployeeId(Integer employeeId) throws IllegalArgumentException, SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'findAll'");
+    }
+
 }

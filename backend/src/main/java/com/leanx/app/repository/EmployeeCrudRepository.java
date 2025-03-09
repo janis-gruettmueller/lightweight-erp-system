@@ -1,13 +1,13 @@
-package main.java.com.leanx.app.repository.impl;
+package com.leanx.app.repository;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import main.java.com.leanx.app.model.Employee;
-import main.java.com.leanx.app.repository.EmployeeRepository;
 
-public class EmployeeRepositoryImpl implements EmployeeRepository {
+import com.leanx.app.model.Employee;
 
+public class EmployeeCrudRepository implements CrudRepository<Employee> {
+    
     @Override
     public void create(Employee employee) throws IllegalArgumentException, SQLException {
         // TODO Auto-generated method stub
@@ -33,9 +33,9 @@ public class EmployeeRepositoryImpl implements EmployeeRepository {
     }
 
     @Override
-    public List<Employee> findAll() throws SQLException {
+    public List<Employee> getAll() throws SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'findAll'");
     }
-    
+
 }
