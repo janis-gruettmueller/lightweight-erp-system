@@ -1,37 +1,38 @@
 ERP Relational Data Modell 
 
 
-+---------------------------+             +---------------------------+
-|   password_history_log    |             |      configurations       |
-+---------------------------+             +---------------------------+
-| log_id (PK)               | n         1 | id (PK)                   |  
-| changed_by                |-------------| setting_key               |  
-| changed_at                |             | setting_value             |  
-| setting_key (FK)          |             | setting_category          |  
-| old_value                 |             | description               |  
-| new_value                 |             | last_updated              | 
-+---------------------------+             | last_updated_by (FK)      | 
-             | n                          +---------------------------+
-             | 
-             |
-             +------------------------------------------------------------------+
-                                                                                | 1
++---------------------------+             +---------------------------+      
+| configuration_change_log  |             |      configurations       |      
++---------------------------+             +---------------------------+      
+| log_id (PK)               | n         1 | id (PK)                   |      
+| changed_by (FK)           |-------------| config_key                |      +-----------------------+
+| changed_at                |             | config_value              |      |    password_history   |
+| config_key (FK)           |             | config_category           |      +-----------------------+
+| config_category (FK)      |             | description               |      | id (PK)               | 
+| old_value                 |             | last_updated              |      | user_id (FK)          |
+| new_value                 |             | last_updated_by (FK)      |      | password_hash         | 
++---------------------------+             +---------------------------+      | created_at            |
+             | n                                                             +-----------------------+
+             |                                                                          | n
+             |                                                                          |
+             +------------------------------------------------------------------+       |
+                                                                                | 1     | 1
 +-------------------+             +-------------------+           +---------------------------+          
 |      roles        |             |    permissions    |           |           users           |          
 +-------------------+             +-------------------+           +---------------------------+          
-| role_id (PK)      |   1         | permission_id (PK)|           | user_id (PK)              |          
-| role_name         |-------+     | permission_name   |           | username                  |          
-| role_description  | 1     |     | permission_desc   |           | user_status               |          
+| id (PK)           | 1           | id (PK)           |           | id (PK)                   |          
+| name              |-------+     | name              |           | name                      |          
+| description       | 1     |     | description       |           | status                    |          
 | created_at        |---+   |     | created_at        |           | password_hash             | 1     
-| last_updated_at   |   |   |     | last_updated_at   |           | num_failed_login_attempts |---------------------+   
-+-------------------+   |   |     +-------------------+           | last_login_at             |                     |
-         | 1            |   |               | 1                   | user_type                 |                     |  
-         |              |   |               |                     | valid_until               | 1                   |
-         |              |   |               |                     | created_at                |---+                 |
+| last_updated_at   |   |   |     | last_updated_at   |           | password_expiry_date      |---------------------+   
++-------------------+   |   |     +-------------------+           | num_failed_login_attempts |                     |
+         | 1            |   |               | 1                   | last_login_at             |                     |  
+         |              |   |               |                     | type                      | 1                   |
+         |              |   |               |                     | valid_until               |---+                 |
+         |              |   |               |                     | created_at                |   |                 |
          |              |   |               |                     | created_by (FK)           |   |                 |
-         |              |   |               |                     | last_updated_by (FK)      |   |                 |
-         |              |   |               |                     | last_updated_at           |   |                 | n
-         |              |   |               |                     | is_verified               |   |      +----------------------+  
+         |              |   |               |                     | last_updated_by (FK)      |   |                 | n
+         |              |   |               |                     | last_updated_at           |   |      +----------------------+  
          |              |   |               |                     +---------------------------+   |      |   user_history_log   |
          |              |   |               |                               | 1     | 1           |      +----------------------+
          |     +--------|---|---------------|-------------------------------+       |             |      | log_id (PK)          |                    
@@ -55,7 +56,7 @@ ERP Relational Data Modell
 +---------------------+         +-------------------+       +-------------------+                 |
 |      employees      |         |     payroll       |       |     salaries      |                 | 
 +---------------------+         +-------------------+       +-------------------+                 |
-| employee_id (PK)    |         | payroll_id (PK)   |       | salary_id (PK)    |                 | 
+| id (PK)             |         | id (PK)           |       | id (PK)           |                 | 
 | first_name          |         | employee_id (FK)  |       | employee_id (FK)  |                 |
 | last_name           |         | pay_period_start  |       | base_salary       |                 | 
 | email               |         | pay_period_end    |       | effective_date    |                 |
@@ -83,7 +84,7 @@ ERP Relational Data Modell
 +--------------------+         +---------------------+       +-------------------+
 | payroll_deductions |         |   payment_details   |       | employee_benefits |
 +--------------------+         +---------------------+       +-------------------+
-| deduction_id (PK)  |         | employee_id (PK)    |       | benefit_id (PK)   |
+| id (PK)            |         | employee_id (PK)    |       | id (PK)           |
 | payroll_id (FK)    |         | payment_method      |       | employee_id (FK)  |
 | deduction_type     |         | account_holder_name |       | benefit_type      |
 | amount             |         | encrypted_bank_acct |       | start_date        |
