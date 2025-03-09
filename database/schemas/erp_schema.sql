@@ -1,20 +1,19 @@
-/********************************************************
- * File: erp_schema.sql
- * Version: 1.0
- * Author: Janis Grüttmüller on 13.02.2025
- * Description: Schema for the ERP systems database
- *
- * change history:
- * 13.02.2025 - added the user access managment logic
- *
- * 16.02.205 - small adjustments for better performance
- *******************************************************/
+/* ******************************************************************************************
+ * File: erp_schema.sql                                                                     *
+ * Version: 1.0                                                                             *
+ * Author: Janis Grüttmüller on 13.02.2025                                                  *
+ * Description: Default Schema for the ERP systems database                                 *
+ *                                                                                          *
+ * change history:                                                                          *
+ * 13.02.2025 - initial default schema for the ERP-System                                   *
+ * database                                                                                 *
+ * **************************************************************************************** */
 
- 
-/*------------ Users, Roles and Permissions (User Administration Modul) ------------------*/
+
+/* ------------ Users, Roles and Permissions (User Administration Modul) ------------------ */
 CREATE TABLE roles (
     role_id INT PRIMARY KEY AUTO_INCREMENT,
-    role_name VARCHAR(255) NOT NULL,
+    role_name VARCHAR(255) UNIQUE NOT NULL,
     role_description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -31,7 +30,7 @@ CREATE TABLE permissions (
 
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) NOT NULL UNIQUE,
+    username VARCHAR(50) UNIQUE NOT NULL,
     user_status ENUM('ACTIVE', 'LOCKED', 'DEACTIVATED') NOT NULL DEFAULT 'ACTIVE',
     /*
         - ACTIVE: User can log in and use the system.
@@ -49,8 +48,7 @@ CREATE TABLE users (
     last_updated_by INT DEFAULT NULL,
     last_updated_at TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE RESTRICT,
-    FOREIGN KEY (last_updated_by) REFERENCES users(user_id),
-    INDEX idx_username (username)
+    FOREIGN KEY (last_updated_by) REFERENCES users(user_id)
 );
 
 -- table for managing permissions per role
@@ -77,7 +75,24 @@ CREATE TABLE user_roles (
     FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
-/*------------------------ Change Logging / Audit-Logs ------------------------------*/
+/* ------------------------------ System Administraion ------------------------------- */
+CREATE TABLE configurations  (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    setting_key VARCHAR(255) UNIQUE NOT NULL,
+    setting_value VARCHAR(255) NOT NULL,
+    setting_category ENUM(
+        'PASSWORD_SETTINGS', 
+        'EMAIL_SETTINGS', 
+        'SECURITY_SETTINGS', 
+        'SYSTEM_SETTINGS'
+    ) NOT NULL,
+    description TEXT,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_updated_by INT NOT NULL,
+    FOREIGN KEY (last_updated_by) REFERENCES users(user_id)
+);
+
+/* ------------------------ Change Logging / Audit-Logs ------------------------------ */
 
 CREATE TABLE security_audit_log (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -95,12 +110,30 @@ CREATE TABLE user_history_log (
     user_id INT NOT NULL,
     changed_by INT NOT NULL,
     changed_at TIMESTAMP NOT NULL,
-    field_name ENUM('user_status', 'is_verified', 'password_hash', 'num_failed_login_attempts', 'last_login_at', 'valid_until') DEFAULT NULL,
+    field_name ENUM(
+        'user_status', 
+        'is_verified', 
+        'password_hash', 
+        'num_failed_login_attempts', 
+        'last_login_at', 
+        'valid_until'
+    ) DEFAULT NULL,
     old_value TEXT DEFAULT NULL,
     new_value TEXT NOT NULL,
     description TEXT DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (changed_by) REFERENCES users(user_id)
+);
+
+CREATE TABLE password_history_log (
+    log_id INT PRIMARY KEY AUTO_INCREMENT,
+    changed_by INT NOT NULL,
+    changed_at TIMESTAMP NOT NULL,
+    setting_key VARCHAR(255) NOT NULL,
+    old_value TEXT DEFAULT NULL,
+    new_value TEXT NOT NULL,
+    FOREIGN KEY (changed_by) REFERENCES users(user_id),
+    FOREIGN KEY (setting_key) REFERENCES configurations (setting_key)
 );
 
 /*------------ Employee, Payroll, Salary and Benefits (HR Operations) -------------------*/
@@ -195,5 +228,3 @@ CREATE TABLE user_employee_link (
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
 );
-
-/*---------------- Transactions, General Ledger, Controlling (Finance Modul) ---------------------*/

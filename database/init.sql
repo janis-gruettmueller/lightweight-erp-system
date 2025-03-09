@@ -2,28 +2,29 @@
  * File: init.sql                                                                        *
  * Version: 1.0                                                                          *
  * Author: Janis Grüttmüller on 17.02.2025                                               *
- * Description: sql script to initialize the ERP Systems                                 *
- * productive database and pre-populate it with data                                     *
+ * Description: sql script to initialize the LeanX ERP Systems                           *
+ * productive database and configure key system users and access management              *
  *                                                                                       *
  * change history:                                                                       *
- * 17.02.2025 - initial version (except FI-Modul)                                        *
+ * 17.02.2025 - initial schema, viwes, triggers and stored procedures                    *
+ * (user administratin, logging and HR operations modul)                                 *
  * ************************************************************************************* */
 
 /* ===================================================================================== *
  *                              create database and schema                               *
  * ===================================================================================== */
 
-DROP DATABASE IF EXISTS erp_prod;
+DROP DATABASE IF EXISTS leanx_erp_prod;
 
-CREATE DATABASE erp_prod;
+CREATE DATABASE leanx_erp_prod;
 
-USE erp_prod;
+USE leanx_erp_prod;
 
 
-/*------------ Users, Roles and Permissions (User Administration Modul) ------------------*/
+/* ------------ Users, Roles and Permissions (User Administration Modul) ------------------ */
 CREATE TABLE roles (
     role_id INT PRIMARY KEY AUTO_INCREMENT,
-    role_name VARCHAR(255) NOT NULL,
+    role_name VARCHAR(255) UNIQUE NOT NULL,
     role_description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -40,7 +41,7 @@ CREATE TABLE permissions (
 
 CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) NOT NULL UNIQUE,
+    username VARCHAR(50) UNIQUE NOT NULL,
     user_status ENUM('ACTIVE', 'LOCKED', 'DEACTIVATED') NOT NULL DEFAULT 'ACTIVE',
     /*
         - ACTIVE: User can log in and use the system.
@@ -58,8 +59,7 @@ CREATE TABLE users (
     last_updated_by INT DEFAULT NULL,
     last_updated_at TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE RESTRICT,
-    FOREIGN KEY (last_updated_by) REFERENCES users(user_id),
-    INDEX idx_username (username)
+    FOREIGN KEY (last_updated_by) REFERENCES users(user_id)
 );
 
 -- table for managing permissions per role
@@ -86,7 +86,24 @@ CREATE TABLE user_roles (
     FOREIGN KEY (created_by) REFERENCES users(user_id)
 );
 
-/*------------------------ Change Logging / Audit-Logs ------------------------------*/
+/* ------------------------------ System Administraion ------------------------------- */
+CREATE TABLE configurations  (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    setting_key VARCHAR(255) UNIQUE NOT NULL,
+    setting_value VARCHAR(255) NOT NULL,
+    setting_category ENUM(
+        'PASSWORD_SETTINGS', 
+        'EMAIL_SETTINGS', 
+        'SECURITY_SETTINGS', 
+        'SYSTEM_SETTINGS'
+    ) NOT NULL,
+    description TEXT,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    last_updated_by INT NOT NULL,
+    FOREIGN KEY (last_updated_by) REFERENCES users(user_id)
+);
+
+/* ------------------------ Change Logging / Audit-Logs ------------------------------ */
 
 CREATE TABLE security_audit_log (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -104,12 +121,30 @@ CREATE TABLE user_history_log (
     user_id INT NOT NULL,
     changed_by INT NOT NULL,
     changed_at TIMESTAMP NOT NULL,
-    field_name ENUM('user_status', 'is_verified', 'password_hash', 'num_failed_login_attempts', 'last_login_at', 'valid_until') DEFAULT NULL,
+    field_name ENUM(
+        'user_status', 
+        'is_verified', 
+        'password_hash', 
+        'num_failed_login_attempts', 
+        'last_login_at', 
+        'valid_until'
+    ) DEFAULT NULL,
     old_value TEXT DEFAULT NULL,
     new_value TEXT NOT NULL,
     description TEXT DEFAULT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (changed_by) REFERENCES users(user_id)
+);
+
+CREATE TABLE password_history_log (
+    log_id INT PRIMARY KEY AUTO_INCREMENT,
+    changed_by INT NOT NULL,
+    changed_at TIMESTAMP NOT NULL,
+    setting_key VARCHAR(255) NOT NULL,
+    old_value TEXT DEFAULT NULL,
+    new_value TEXT NOT NULL,
+    FOREIGN KEY (changed_by) REFERENCES users(user_id),
+    FOREIGN KEY (setting_key) REFERENCES configurations (setting_key)
 );
 
 /*------------ Employee, Payroll, Salary and Benefits (HR Operations) -------------------*/
@@ -205,8 +240,105 @@ CREATE TABLE user_employee_link (
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
 );
 
-/*---------------- Transactions, General Ledger, Controlling (Finance Modul) ---------------------*/
+/* ---------------- Transactions, General Ledger, Controlling (Finance Modul) -------------------- */
 
+
+/* =============================================================================================== *
+ *                                      define database Views                                      *
+ * =============================================================================================== */
+
+/* -------------------------------------- HR Operations Views ------------------------------------ */
+
+
+
+
+/* -------------------------------------- FI Operations Views ------------------------------------ */
+
+
+
+
+/* -------------------------------------- User Administration Views ------------------------------ */
+
+CREATE VIEW user_role_view AS
+SELECT
+    u.user_id AS 'user id',
+    u.username AS 'username',
+    r.role_name AS 'role'
+FROM users u
+JOIN user_roles ur ON u.user_id = ur.user_id
+JOIN roles r ON ur.role_id = r.role_id;
+
+
+CREATE VIEW active_users_view AS
+SELECT
+    u.username AS 'username',
+    e.first_name AS 'first name',
+    e.last_name AS 'last_name',
+    e.employment_status AS 'employment status',
+    e.termination_date AS 'termination_date',
+    u.user_status AS 'user status',
+    u.user_type AS 'user type',
+    u.last_login_at AS 'last login',
+    u.created_by AS 'created by',
+    u.created_at AS 'created at'
+FROM users u
+JOIN user_employee_link uel ON u.user_id = uel.user_id
+JOIN employees e ON uel.employee_id = e.employee_id
+WHERE u.user_status = 'ACTIVE' AND u.user_type = 'NORMAL'
+ORDER BY u.created_at;
+
+
+CREATE VIEW deactived_users_view AS
+SELECT
+    u.username AS 'username',
+    e.first_name AS 'first name',
+    e.last_name AS 'last_name',
+    e.employment_status AS 'employment status',
+    e.termination_date AS 'termination_date',
+    u.user_status AS 'user status',
+    u.user_type AS 'user type',
+    u.last_login_at AS 'last login',
+    u.created_by AS 'created by',
+    u.created_at AS 'created at'
+FROM users u
+LEFT JOIN user_employee_link uel ON u.user_id = uel.user_id
+LEFT JOIN employees e ON uel.employee_id = e.employee_id
+WHERE u.user_status = 'DEACTIVATED' AND u.user_type = 'NORMAL'
+ORDER BY u.created_at;
+
+
+
+CREATE VIEW privileged_users_view AS
+SELECT
+    u.username AS 'username',
+    e.first_name AS 'first name',
+    e.last_name AS 'last_name',
+    u.user_status AS 'user status',
+    u.user_type AS 'user type',
+    u.last_login_at AS 'last login',
+    u.created_by AS 'created by',
+    u.created_at AS 'created at'
+FROM users u
+LEFT JOIN user_employee_link uel ON u.user_id = uel.user_id
+LEFT JOIN employees e ON uel.employee_id = e.employee_id
+WHERE u.user_type = 'ADMIN'
+ORDER BY u.created_at;
+
+
+CREATE VIEW system_users_view AS
+SELECT
+    username AS 'username',
+    user_status AS 'user status',
+    user_type AS 'user type',
+    last_login_at AS 'last login',
+    created_by AS 'created by',
+    created_at AS 'created at'
+FROM users
+WHERE user_type = 'SYSTEM';
+
+
+CREATE VIEW password_settings_view AS
+SELECT * FROM configurations WHERE setting_category = 'PASSWORD_SETTINGS'; 
 
 
 /* =============================================================================================== *
@@ -306,7 +438,7 @@ END $$
 DELIMITER ;
 
 
-/*------------------- triggers for logging changes in security_audit_log table -------------------*/
+/* ------------------ triggers for logging changes in security_audit_log table ------------------- */
 
 DELIMITER $$
 
@@ -333,7 +465,26 @@ END $$
 
 DELIMITER ;
 
-/*------------------------------- triggers for the HR Modul tables --------------------------------*/
+DELIMITER $$
+
+/* ------------- triggers for logging changes to password settings in configurations  table -------------- */
+
+CREATE TRIGGER log_password_setting_changes
+AFTER UPDATE ON configurations 
+FOR EACH ROW
+BEGIN
+    IF NEW.setting_category = 'PASSWORD_SETTINGS' THEN
+        -- Log changes to password setting key values
+        IF NEW.setting_value != OLD.setting_value THEN
+            INSERT INTO password_history_log (changed_by, changed_at, setting_key, old_value, new_value)
+            VALUES (NEW.last_updated_by, NEW.last_updated, OLD.setting_key, OLD.setting_value, NEW.setting_value);
+        END IF;
+    END IF;
+END $$
+
+DELIMITER ;
+
+/* ------------------------------- triggers for the HR Modul tables -------------------------------- */
 
 DELIMITER $$
 
@@ -381,11 +532,13 @@ CREATE PROCEDURE DeactivateUserAccount (
     -- remove all roles associated to user account
     DELETE FROM user_roles WHERE user_id = user_id_param;
 
+    /* 
     -- delete employee user mapping if exists
     IF EXISTS (SELECT 1 FROM user_employee_link WHERE user_id = user_id_param) THEN
 		DELETE FROM user_employee_link
 		WHERE user_id = user_id_param;
 	END IF;
+    */
     
     COMMIT;
 END $$
@@ -429,8 +582,33 @@ DELIMITER $$
 CREATE PROCEDURE TerminateEmployee (
 	employee_id_param INT
 ) BEGIN
-	START TRANSACTION;
+
+    -- Declare variables for cursor
+    DECLARE user_id INT;
+    DECLARE done INT DEFAULT 0;
+    DECLARE user_cursor CURSOR FOR 
+        SELECT user_id FROM user_employee_link WHERE employee_id = employee_id_param;
     
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+	START TRANSACTION;
+
+    OPEN user_cursor;
+    
+    -- Loop through all associated users and deactivate each one
+    read_loop: LOOP
+        FETCH user_cursor INTO user_id;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Call DeactivateUserAccount procedure for each user
+        CALL DeactivateUserAccount(user_id, 2); -- user_id = 2 is a system user
+    END LOOP;
+    
+    CLOSE user_cursor;
+
+        
 	UPDATE employees
     SET employee_status = 
         CASE 
@@ -439,28 +617,6 @@ CREATE PROCEDURE TerminateEmployee (
             ELSE 'TERMINATED'
         END
     WHERE employee_id = employee_id_param;
-    
-    -- deactivate all associated user accounts
-    UPDATE users
-    SET user_status = 'DEACTIVATED', last_updated_by = 2
-    WHERE user_id IN (
-        SELECT user_id FROM user_employee_link WHERE employee_id = employee_id_param
-    );
-    
-    -- Log role deactivation for audit purposes
-    UPDATE user_roles
-    SET created_by = 2
-    WHERE user_id IN (
-        SELECT user_id FROM user_employee_link WHERE employee_id = employee_id_param
-    );
-    
-    -- Remove all roles from those users
-    DELETE FROM user_roles WHERE user_id IN (
-        SELECT user_id FROM user_employee_link WHERE employee_id = employee_id_param
-    );
-
-    -- Remove user-employee mappings
-    DELETE FROM user_employee_link WHERE employee_id = employee_id_param;
     
     COMMIT;
 END $$
@@ -477,7 +633,7 @@ START TRANSACTION;
 -- Create Roles
 INSERT INTO roles (role_id, role_name, role_description) VALUES
     (1, 'System User', 'Used for automated processes and background jobs'),
-    (2, 'Admin', 'Full access to system configurations and user management'),
+    (2, 'Admin', 'Full access to system configurations s and user management'),
     (3, 'FI Ops', 'Manages financial transactions, reports, and analysis'),
     (4, 'HR Ops', 'Manages employee records, payroll, and benefits'),
     (5, 'Employee', 'Access to personal data, payroll records, and requests of absence')
@@ -499,12 +655,12 @@ INSERT INTO permissions (permission_id, permission_name, permission_description)
     (12, 'Create User', 'Ability to create new user accounts'),
     (13, 'Deactivate User', 'Ability to deactivate existing user accounts'),
     (14, 'Modify User Access', 'Ability to modify access rights of existing user accounts'),
-    (15, 'Modify System Settings', 'Ability to modify system settings and configurations'),
+    (15, 'Modify System Settings', 'Ability to modify system settings and configurations s'),
     (16, 'Run Background Jobs', 'Ability to start and run automated background jobs'),
     (17, 'Run Automated Processes', 'Ability to start and run automated system processes')
 ;
 
-/*------------------- create system users for initial system setup and configuration ----------------------------*/
+/* ------------------ create system users for initial system setup and configurations  --------------------------- */
 
 -- system user used for initial system setup
 INSERT INTO users (user_id, username, user_status, user_type, password_hash, is_verified, created_by) 
@@ -514,7 +670,7 @@ VALUES (1, 'SYS_SETUP', 'LOCKED', 'SYSTEM', '', NULL, 1);
 INSERT INTO users (username, user_status, user_type, password_hash, is_verified, created_by) 
 VALUES ('SYS_', 'LOCKED', 'SYSTEM', '', NULL, 1);
 
-/*------------------------------------- Assign Permissions to Roles ---------------------------------------------*/
+/* ------------------------------------ Assign Permissions to Roles -------------------------------------------- */
 -- System User
 INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
     (1, 16, 1), (1, 17, 1) -- run automated processes and background jobs
@@ -547,8 +703,21 @@ INSERT INTO role_permissions (role_id, permission_id,  created_by) VALUES
     (5, 11, 1)   -- Submit or view Request of absence
 ;
 
+-- Set Initial Password configurations 
+INSERT INTO configurations  (setting_key, setting_value, setting_category, description, last_updated_by)
+VALUES
+    ('password.min_length', '8', 'PASSWORD_SETTINGS', 'Minimum password length', 1),
+    ('password.max_length', '20', 'PASSWORD_SETTINGS', 'Maximum password length', 1),
+    ('password.require_uppercase', 'true', 'PASSWORD_SETTINGS', 'Require uppercase letters', 1),
+    ('password.require_lowercase', 'true', 'PASSWORD_SETTINGS', 'Require lowercase letters', 1),
+    ('password.require_numbers', 'true', 'PASSWORD_SETTINGS', 'Require numeric characters', 1),
+    ('password.require_special_characters', 'true', 'PASSWORD_SETTINGS', 'Require special characters', 1),
+    ('password.history_size', '5', 'PASSWORD_SETTINGS', 'Number of previous passwords to check for reuse', 1),
+    ('password.expiry_period', '90', 'PASSWORD_SETTINGS', 'Password expiry period in days', 1),
+    ('password.num_failed_attempts_before_lockout', '5', 'PASSWORD_SETTINGS', 'Number of failed login attempts before locking the account', 1),
+    ('password.lockout_duration', '30', 'PASSWORD_SETTINGS', 'Duration of account lockout in minutes', 1);
 
-/*----------------------------------- Create Default User for manual System Setup ------------------------------------------*/
+/* ---------------------------------- Create Default User for manual System Setup ----------------------------------------- */
 
 -- password: "initERP@2025" hashed with BCrypt (it is highly recommended to lock the user following the initial setup!)
 INSERT INTO users (username, user_status, user_type, password_hash, is_verified, created_by) 

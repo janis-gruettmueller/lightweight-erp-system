@@ -1,4 +1,6 @@
 # Ignore sensitive configuration files
 /.env
 /secrets
+/backend/target
+/backend/config/.env
 /scripts/aws-connect-ec2.sh

@@ -45,5 +45,6 @@ public interface CrudRepository<T> {
      * @return A list of all entity objects, or an empty list if no entities are found.
      * @throws SQLException if there is an issue accessing the database.
      */
-    List<T> findAll() throws SQLException;
+    List<T> getAll() throws SQLException;
+
 }
