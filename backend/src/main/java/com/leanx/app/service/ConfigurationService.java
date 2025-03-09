@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.service;
+package com.leanx.app.service;
 
 public class ConfigurationService {
     

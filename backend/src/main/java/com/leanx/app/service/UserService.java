@@ -1,10 +1,10 @@
-package main.java.com.leanx.app.service;
+package com.leanx.app.service;
 
 import java.util.List;
 import java.util.Map;
 
-import main.java.com.leanx.app.model.User;
-import main.java.com.leanx.app.model.views.UserRoleView;
+import com.leanx.app.model.User;
+import com.leanx.app.model.views.UserRoleView;
 
 public class UserService {
 

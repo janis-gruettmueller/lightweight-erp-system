@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.repository;
+package com.leanx.app.repository;
 
 import java.sql.SQLException;
 import java.util.List;

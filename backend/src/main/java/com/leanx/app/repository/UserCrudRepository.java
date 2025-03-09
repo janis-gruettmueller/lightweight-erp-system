@@ -1,9 +1,10 @@
-package main.java.com.leanx.app.repository;
+package com.leanx.app.repository;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import main.java.com.leanx.app.model.User;
+
+import com.leanx.app.model.User;
 
 public class UserCrudRepository implements CrudRepository<User>  {
 

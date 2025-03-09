@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.utils;
+package com.leanx.app.utils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

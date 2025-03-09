@@ -1,6 +1,6 @@
-package main.java.com.leanx.app.service;
+package com.leanx.app.service;
 
-import main.java.com.leanx.app.utils.PasswordUtils;
+import com.leanx.app.utils.PasswordUtils;
 
 public class PasswordService {
     private PasswordUtils utils = new PasswordUtils();
@@ -10,6 +10,8 @@ public class PasswordService {
      * @param password The password to be validated.
      * @return True if valid, false otherwise.
      */
-    boolean isValidPassword(String password);
+    public boolean isValidPassword(String password) {
+        return true;
+    }
     
 }

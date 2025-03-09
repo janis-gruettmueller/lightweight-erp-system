@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.model;
+package com.leanx.app.model;
 
 import java.io.Serializable;
 import java.sql.Date;

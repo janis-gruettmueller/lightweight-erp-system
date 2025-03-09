@@ -1,6 +1,4 @@
-package main.java.com.leanx.app.utils;
-
-import org.mindrot.jbcrypt.BCrypt;
+package com.leanx.app.utils;
 
 public class PasswordUtils {
 
@@ -10,7 +8,7 @@ public class PasswordUtils {
      * @return The hashed password.
      */
     public String hashPassword(String plainTextPassword) {
-
+        return "";
     }
 
     /**
@@ -19,6 +17,8 @@ public class PasswordUtils {
      * @param hashedPassword The password hash of user object.
      * @return True if passwords match, false otherwise.
      */
-    boolean checkPassword(String plainTextPassword, String hashedPassword);
+    boolean checkPassword(String plainTextPassword, String hashedPassword) {
+        return false;
+    }
 
 }

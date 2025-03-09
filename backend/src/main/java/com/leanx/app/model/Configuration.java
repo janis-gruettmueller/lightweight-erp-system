@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.model;
+package com.leanx.app.model;
 
 public class Configuration {
     

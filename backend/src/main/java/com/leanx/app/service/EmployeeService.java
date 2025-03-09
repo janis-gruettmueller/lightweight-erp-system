@@ -1,6 +1,6 @@
-package main.java.com.leanx.app.service;
+package com.leanx.app.service;
 
-import main.java.com.leanx.app.model.views.PayrollView;
+import com.leanx.app.model.views.PayrollView;
 
 public class EmployeeService {
     public PayrollView getPayrollsByEmployeeId(Integer employeeId) {

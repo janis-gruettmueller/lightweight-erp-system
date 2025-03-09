@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.api;
+package com.leanx.app.api;
 
 public class UserAdministrationController {
     

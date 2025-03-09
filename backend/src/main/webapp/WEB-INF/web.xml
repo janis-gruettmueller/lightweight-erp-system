@@ -6,4 +6,31 @@
 
     <!-- Define your servlets, filters, and other configurations here -->
 
+    <filter>
+        <filter-name>sessionValidationFilter</filter-name>
+        <filter-class>com.leanx.app.filters.SessionValidationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>sessionValidationFilter</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>authenticationFilter</filter-name>
+        <filter-class>com.leanx.app.filters.AuthenticationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>authenticationFilter</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>authorizationFilter</filter-name>
+        <filter-class>com.leanx.app.filters.AuthorizationFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>authorizationFilter</filter-name>
+        <url-pattern>/api/*</url-pattern>
+    </filter-mapping>
+
 </web-app>

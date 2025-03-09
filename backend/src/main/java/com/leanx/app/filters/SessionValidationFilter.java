@@ -1,14 +1,20 @@
-package com.leanx.app.api;
+package com.leanx.app.filters;
 
-import jakarta.servlet.*;
+import java.io.IOException;
+import java.util.logging.Logger;
+
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.logging.Logger;
 
-@WebFilter(urlPatterns = {"/api/*"}, filterName = "sessionValidationFilter", order = 2) // Adjust URL patterns
+@WebFilter(urlPatterns = {"/api/*"}, filterName = "sessionValidationFilter") // Adjust URL patterns
 public class SessionValidationFilter implements Filter {
 
     private static final Logger logger = Logger.getLogger(SessionValidationFilter.class.getName());

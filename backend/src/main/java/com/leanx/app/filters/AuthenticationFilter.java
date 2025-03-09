@@ -1,18 +1,25 @@
-package main.java.com.leanx.app.filters;
+package com.leanx.app.filters;
+
+import java.io.IOException;
+import java.util.List;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import jakarta.servlet.*; // Updated import
-import jakarta.servlet.annotation.WebFilter; // Updated import
-import jakarta.servlet.http.HttpServletRequest; // Updated import
-import jakarta.servlet.http.HttpServletResponse; // Updated import
-import java.io.IOException;
-import java.util.List;
+import com.auth0.jwt.exceptions.JWTVerificationException; // Updated import
+import com.auth0.jwt.interfaces.DecodedJWT; // Updated import
 
-@WebFilter(urlPatterns = "/api/*", filterName = "authenticationFilter", order = 1)
+import jakarta.servlet.Filter; // Updated import
+import jakarta.servlet.FilterChain; // Updated import
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebFilter(urlPatterns = "/api/*", filterName = "authenticationFilter")
 public class AuthenticationFilter implements Filter {
 
     private static final String SECRET_KEY = System.getenv("SECRET_KEY");

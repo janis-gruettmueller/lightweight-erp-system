@@ -1,4 +1,4 @@
-package main.java.com.leanx.app.api;
+package com.leanx.app.api;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,8 +12,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.List;
 
-import main.java.com.leanx.app.service.EmployeeService;
-import main.java.com.leanx.app.service.UserService;
+import com.leanx.app.service.EmployeeService;
+import com.leanx.app.service.UserService;
 
 
 @WebServlet("/api/employee/*")
@@ -80,6 +80,7 @@ public class EmployeeController extends HttpServlet {
     }
 
     private void handleViewPersonalInfo(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // needs current user as input -> handeled via JWT probably
         if (!userService.hasRole("Employee")) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write(new JSONObject().put("error", "Access denied").toString());
