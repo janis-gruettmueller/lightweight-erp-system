@@ -2,7 +2,4 @@
 /backend/target
 /frontend/target
 
-/frontend/src/node
-/frontend/src/node/node_modules
-
 /secrets
