@@ -3,13 +3,15 @@
 ## 1. Introduction
 
 **Purpose:** This database stores ... and supports ...
+
 **Scope:** The database includes ...
+
 **Target Audience:** Developers, DBAs
 
 ## 2. Database Design
 
 **ER-Diagramm**
-![ER-Diagramm](images/ER_diagramm.png)
+![ER-Diagramm](images/ER_diagramm_dark.png)
 
 
 ### Table Definitions
