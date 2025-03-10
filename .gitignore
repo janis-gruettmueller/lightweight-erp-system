@@ -1,8 +1,6 @@
-target
+/target
 /backend/target
 /frontend/target
-
-frontend/src/node
-frontend/src/package-lock.jason
-
-secrets
+/frontend/src/node
+/frontend/src/package-lock.json
+/secrets
