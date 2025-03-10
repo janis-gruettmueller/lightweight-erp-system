@@ -3,7 +3,7 @@
 #### Overview of the relational data model and database schema for the ERP-System's MySQL Database*
 
 **ER-Diagramm**
-![ER-Diagramm](ER_diagramm.png)
+![ER-Diagramm](images/ER_diagramm.png)
 
 
 **SQL code for creating the database schema:**
