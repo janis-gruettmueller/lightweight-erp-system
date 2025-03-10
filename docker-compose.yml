@@ -1,0 +1,19 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: erp-prod-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    env_file:
+      - ./.env
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql    # Mount init.sql to initialize database
+      - mysql_data:/var/lib/mysql                          # Mount volume to persist data
+    ports:
+      - "3306:3306"  # Expose MySQL port
+    restart: unless-stopped  # 
+
+volumes:
+  mysql_data:
+    driver: local # volume to store MySQL data persistently
