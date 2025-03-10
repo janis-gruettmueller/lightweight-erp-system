@@ -3,3 +3,7 @@
 /frontend/target
 
 /secrets
+
+.github/workflows/deploy_v2.yml
+
+.env

@@ -93,7 +93,7 @@ CREATE TABLE password_history (
     password_hash VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
-)
+);
 
 CREATE TABLE configurations  (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -525,7 +525,7 @@ CREATE TRIGGER update_password_history
 AFTER UPDATE ON password_history
 FOR EACH ROW
 BEGIN
-    
+
 END $$
 
 DELIMITER ;

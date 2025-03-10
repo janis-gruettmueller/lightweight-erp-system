@@ -6,4 +6,6 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>frontend</artifactId>
+
+    <packaging>pom</packaging>
 </project>
