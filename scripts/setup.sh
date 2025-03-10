@@ -12,7 +12,6 @@ fi
 
 # define file path and set variables
 ENV_FILE=".env"
-BACKUP_SCRIPT="./scripts/backup_rds_prod_to_s3"
 
 # copy all necessary files and scripts
 echo "Copying files to EC2 instance..."
