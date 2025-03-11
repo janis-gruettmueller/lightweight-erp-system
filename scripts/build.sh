@@ -1,7 +1,16 @@
-#!/bin/bash
+##########################################################
+# File: build.sh                                         #
+# Version: 1.0                                           #
+# Author: Janis Grüttmüller on 11.03.2025                #
+# Description: script to build the docker image of the   #
+# LeanX ERP-System and push it to dockerhub              #
+#                                                        #
+# change history:                                        #
+# 11.03.2025 - initial version                           #
+##########################################################
 
-# Checkout code
-git checkout main
+#!/bin/bash
+set -e  # Exit if any command fails
 
 # Set up JDK 17 for backend
 echo "Setting up JDK 17..."
