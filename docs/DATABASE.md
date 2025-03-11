@@ -6,7 +6,7 @@
 
 **Scope:** The database includes ...
 
-**Target Audience:** Developers, DBAs
+**Target Audience:** Developers, DB Administrators
 
 ## 2. Database Design
 
@@ -16,16 +16,434 @@
 
 ### Table Definitions
 
+**roles Table**
+
+* **Purpose:** Stores information about roles in the system.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `name`: VARCHAR(255), UNIQUE, NOT NULL
+    * `description`: TEXT
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `last_updated_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE roles (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) UNIQUE NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    ```
+
+**permissions Table**
+
+* **Purpose:** Stores information about system permissions.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `name`: VARCHAR(255), NOT NULL
+    * `description`: TEXT
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `last_updated_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE permissions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    ```
+
 **users Table**
 
 * **Purpose:** Stores information about users.
 * **Columns:**
-    * `id`: INT, PRIMARY KEY
-    * `name`: VARCHAR(255), NOT NULL
-    * `...`: ...
-    * **SQL Code:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `name`: VARCHAR(50), UNIQUE, NOT NULL
+    * `status`: ENUM('ACTIVE', 'LOCKED', 'DEACTIVATED'), NOT NULL, DEFAULT 'ACTIVE'
+    * `type`: ENUM('NORMAL', 'ADMIN', 'SYSTEM'), NOT NULL, DEFAULT 'NORMAL'
+    * `password_hash`: VARCHAR(255), NOT NULL
+    * `password_expiry_date`: DATE, NOT NULL
+    * `num_failed_login_attempts`: INT, DEFAULT 0
+    * `last_login_at`: TIMESTAMP, DEFAULT NULL
+    * `valid_until`: DATE, DEFAULT NULL
+    * `created_by`: INT, NOT NULL, DEFAULT 1
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `last_updated_by`: INT, DEFAULT NULL
+    * `last_updated_at`: TIMESTAMP, DEFAULT NULL, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
     ```sql
+    CREATE TABLE users (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(50) UNIQUE NOT NULL,
+        status ENUM('ACTIVE', 'LOCKED', 'DEACTIVATED') NOT NULL DEFAULT 'ACTIVE',
+        type ENUM('NORMAL', 'ADMIN', 'SYSTEM') NOT NULL DEFAULT 'NORMAL',
+        password_hash VARCHAR(255) NOT NULL,
+        password_expiry_date DATE NOT NULL,
+        num_failed_login_attempts INT DEFAULT 0,
+        last_login_at TIMESTAMP DEFAULT NULL,
+        valid_until DATE DEFAULT NULL,
+        created_by INT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_updated_by INT DEFAULT NULL,
+        last_updated_at TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+        FOREIGN KEY (last_updated_by) REFERENCES users(id)
+    );
+    ```
 
+**role_permissions Table**
+
+* **Purpose:** Stores the mapping of roles and permissions.
+* **Columns:**
+    * `role_id`: INT, NOT NULL
+    * `permission_id`: INT, NOT NULL
+    * `created_by`: INT, NOT NULL
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE role_permissions (
+        role_id INT NOT NULL,
+        permission_id INT NOT NULL,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (role_id, permission_id),
+        FOREIGN KEY (role_id) REFERENCES roles(id),
+        FOREIGN KEY (permission_id) REFERENCES permissions(id),
+        FOREIGN KEY (created_by) REFERENCES users(id)
+    );
+    ```
+
+**user_roles Table**
+
+* **Purpose:** Stores the mapping of users and roles.
+* **Columns:**
+    * `user_id`: INT, NOT NULL
+    * `role_id`: INT, NOT NULL
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `created_by`: INT, NOT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE user_roles (
+        user_id INT NOT NULL,
+        role_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT NOT NULL,
+        PRIMARY KEY (user_id, role_id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (role_id) REFERENCES roles(id),
+        FOREIGN KEY (created_by) REFERENCES users(id)
+    );
+    ```
+
+**password_history Table**
+
+* **Purpose:** Stores password history for users.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `user_id`: INT, NOT NULL
+    * `password_hash`: VARCHAR(255)
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE password_history (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        password_hash VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    ```
+
+**configurations Table**
+
+* **Purpose:** Stores configuration settings for the system.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `key`: VARCHAR(255), UNIQUE, NOT NULL
+    * `value`: VARCHAR(255), NOT NULL
+    * `category`: ENUM('PASSWORD_SETTINGS', 'EMAIL_SETTINGS', 'SECURITY_SETTINGS', 'SYSTEM_SETTINGS'), NOT NULL
+    * `description`: TEXT
+    * `last_updated`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+    * `last_updated_by`: INT, NOT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE configurations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        key VARCHAR(255) UNIQUE NOT NULL,
+        value VARCHAR(255) NOT NULL,
+        category ENUM('PASSWORD_SETTINGS', 'EMAIL_SETTINGS', 'SECURITY_SETTINGS', 'SYSTEM_SETTINGS') NOT NULL,
+        description TEXT,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        last_updated_by INT NOT NULL,
+        FOREIGN KEY (last_updated_by) REFERENCES users(id)
+    );
+    ```
+
+**security_audit_log Table**
+
+* **Purpose:** Stores security-related audit logs for changes to roles.
+* **Columns:**
+    * `log_id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `user_id`: INT, NOT NULL
+    * `role_id`: INT, NOT NULL
+    * `changed_by`: INT, NOT NULL
+    * `changed_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `activity_type`: ENUM('ROLE_ASSIGNED', 'ROLE_REMOVED'), NOT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE security_audit_log (
+        log_id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        role_id INT NOT NULL,
+        changed_by INT NOT NULL,
+        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        activity_type ENUM('ROLE_ASSIGNED', 'ROLE_REMOVED') NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (changed_by) REFERENCES users(id)
+    );
+    ```
+
+**user_history_log Table**
+
+* **Purpose:** Stores historical logs of user data changes.
+* **Columns:**
+    * `log_id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `user_id`: INT, NOT NULL
+    * `changed_by`: INT, NOT NULL
+    * `changed_at`: TIMESTAMP, NOT NULL
+    * `field_name`: ENUM('user_status', 'is_verified', 'password_hash', 'num_failed_login_attempts', 'last_login_at', 'valid_until'), DEFAULT NULL
+    * `old_value`: TEXT, DEFAULT NULL
+    * `new_value`: TEXT, NOT NULL
+    * `description`: TEXT, DEFAULT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE user_history_log (
+        log_id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT NOT NULL,
+        changed_by INT NOT NULL,
+        changed_at TIMESTAMP NOT NULL,
+        field_name ENUM('user_status', 'is_verified', 'password_hash', 'num_failed_login_attempts', 'last_login_at', 'valid_until') DEFAULT NULL,
+        old_value TEXT DEFAULT NULL,
+        new_value TEXT NOT NULL,
+        description TEXT DEFAULT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (changed_by) REFERENCES users(id)
+    );
+    ```
+
+**configuration_change_log Table**
+
+* **Purpose:** Stores changes to configuration settings.
+* **Columns:**
+    * `log_id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `changed_by`: INT, NOT NULL
+    * `changed_at`: TIMESTAMP, NOT NULL
+    * `config_key`: VARCHAR(255), NOT NULL
+    * `config_category`: VARCHAR(255), NOT NULL
+    * `old_value`: TEXT, DEFAULT NULL
+    * `new_value`: TEXT, NOT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE configuration_change_log (
+        log_id INT PRIMARY KEY AUTO_INCREMENT,
+        changed_by INT NOT NULL,
+        changed_at TIMESTAMP NOT NULL,
+        config_key VARCHAR(255) NOT NULL,
+        config_category VARCHAR(255) NOT NULL,
+        old_value TEXT DEFAULT NULL,
+        new_value TEXT NOT NULL,
+        FOREIGN KEY (changed_by) REFERENCES users(id),
+        FOREIGN KEY (setting_key) REFERENCES configurations(key)
+    );
+    ```
+
+**employees Table**
+
+* **Purpose:** Stores information about employees.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `first_name`: VARCHAR(50), NOT NULL
+    * `last_name`: VARCHAR(50), NOT NULL
+    * `email`: VARCHAR(255), NOT NULL
+    * `job_titel`: VARCHAR(100)
+    * `department`: VARCHAR(100)
+    * `employment_type`: ENUM('FULL_TIME', 'PART_TIME', 'INTERN'), NOT NULL
+    * `employment_status`: ENUM('ACTIVE', 'TERMINATED', 'RESIGNED', 'RETIRED', 'ON_LEAVE', 'SUSPENDED'), NOT NULL
+    * `hire_date`: DATE, NOT NULL
+    * `start_date`: DATE, DEFAULT NULL
+    * `termination_date`: DATE, DEFAULT NULL
+    * `termination_reason`: ENUM('Resignation', 'Dismissal', 'End of Contract', 'Retirement')
+    * `retention_end_date`: DATE, DEFAULT NULL
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `created_by`: INT, NOT NULL
+    * `last_updated_by`: INT, DEFAULT NULL
+    * `last_updated_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE employees (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        first_name VARCHAR(50) NOT NULL,
+        last_name VARCHAR(50) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        job_titel VARCHAR(100),
+        department VARCHAR(100),
+        employment_type ENUM('FULL_TIME', 'PART_TIME', 'INTERN') NOT NULL,
+        employment_status ENUM('ACTIVE', 'TERMINATED', 'RESIGNED', 'RETIRED', 'ON_LEAVE', 'SUSPENDED') NOT NULL,
+        hire_date DATE NOT NULL,
+        start_date DATE DEFAULT NULL,
+        termination_date DATE DEFAULT NULL,
+        termination_reason ENUM('Resignation', 'Dismissal', 'End of Contract', 'Retirement'),
+        retention_end_date DATE DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT NOT NULL,
+        last_updated_by INT DEFAULT NULL,
+        last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id),
+        FOREIGN KEY (last_updated_by) REFERENCES users(id)
+    );
+    ```
+
+**payroll Table**
+
+* **Purpose:** Stores payroll information for employees.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `employee_id`: INT, NOT NULL
+    * `pay_period_start`: DATE, NOT NULL
+    * `pay_period_end`: DATE, NOT NULL
+    * `gross_salary`: DECIMAL(10, 2), NOT NULL
+    * `total_deductions`: DECIMAL(10, 2), NOT NULL
+    * `net_salary`: DECIMAL(10, 2), NOT NULL
+    * `payment_date`: DATE, NOT NULL
+    * `payment_status`: ENUM('PENDING', 'PROCESSED', 'FAILED'), DEFAULT 'PENDING'
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `last_updated_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE payroll (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        employee_id INT NOT NULL,
+        pay_period_start DATE NOT NULL,
+        pay_period_end DATE NOT NULL,
+        gross_salary DECIMAL(10,2) NOT NULL,
+        total_deductions DECIMAL(10,2) NOT NULL,
+        net_salary DECIMAL(10,2) NOT NULL,
+        payment_date DATE NOT NULL,
+        payment_status ENUM('PENDING', 'PROCESSED', 'FAILED') DEFAULT 'PENDING',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+    ```
+
+**salaries Table**
+
+* **Purpose:** Keeps track of employee salaries and adjustments over time.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `employee_id`: INT, NOT NULL
+    * `base_salary`: DECIMAL(10, 2), NOT NULL
+    * `effective_date`: DATE, NOT NULL
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `last_updated_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE salaries (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        employee_id INT NOT NULL,
+        base_salary DECIMAL(10, 2) NOT NULL,
+        effective_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+    ```
+
+**payroll_deductions Table**
+
+* **Purpose:** Stores payroll deductions like taxes, benefits, etc.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `payroll_id`: INT, NOT NULL
+    * `deduction_type`: ENUM('TAX', 'INSURANCE', 'PENSION', 'OTHER'), NOT NULL
+    * `amount`: DECIMAL(10, 2), NOT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE payroll_deductions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        payroll_id INT NOT NULL,
+        deduction_type ENUM('TAX', 'INSURANCE', 'PENSION', 'OTHER') NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        FOREIGN KEY (payroll_id) REFERENCES payroll(id) ON DELETE CASCADE
+    );
+    ```
+
+**payment_details Table**
+
+* **Purpose:** Stores employees' payment information.
+* **Columns:**
+    * `employee_id`: INT, PRIMARY KEY, NOT NULL
+    * `payment_method`: ENUM('BANK_TRANSFER', 'CHECK'), NOT NULL
+    * `account_holder_name`: VARCHAR(255), DEFAULT NULL
+    * `encrypted_bank_account`: VARBINARY(255), DEFAULT NULL (Store encrypted bank account number, e.g., IBAN for EU)
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+    * `last_updated_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP, ON UPDATE CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE payment_details (
+        employee_id INT PRIMARY KEY,
+        payment_method ENUM('BANK_TRANSFER', 'CHECK') NOT NULL,
+        account_holder_name VARCHAR(255) DEFAULT NULL,
+        encrypted_bank_account VARBINARY(255) DEFAULT NULL,  -- Store encrypted bank account number (EU: IBAN)
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+    ```
+
+**employee_benefits Table**
+
+* **Purpose:** Stores employee benefits information.
+* **Columns:**
+    * `id`: INT, PRIMARY KEY, AUTO_INCREMENT
+    * `employee_id`: INT, NOT NULL
+    * `benefit_type`: ENUM('HEALTH_INSURANCE', 'PENSION', 'PAID_LEAVE', 'OTHER'), NOT NULL
+    * `start_date`: DATE, NOT NULL
+    * `end_date`: DATE, DEFAULT NULL
+    * `amount`: DECIMAL(10, 2), NOT NULL
+* **SQL Code:**
+    ```sql
+    CREATE TABLE employee_benefits (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        employee_id INT NOT NULL,
+        benefit_type ENUM('HEALTH_INSURANCE', 'PENSION', 'PAID_LEAVE', 'OTHER') NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE DEFAULT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE
+    );
+    ```
+
+**user_employee_link Table**
+
+* **Purpose:** Maps employees to user accounts in the system.
+* **Columns:**
+    * `user_id`: INT, NOT NULL
+    * `employee_id`: INT, NOT NULL
+    * `created_at`: TIMESTAMP, DEFAULT CURRENT_TIMESTAMP
+* **SQL Code:**
+    ```sql
+    CREATE TABLE user_employee_link (
+        user_id INT NOT NULL,
+        employee_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, employee_id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (employee_id) REFERENCES employees(id)
+    );
     ```
 
 ## 3. Database Objects
@@ -486,12 +904,67 @@
 
 ### Tables
 
-**users Table**
+**salaries Table**
 
-| Column | Data Type | Description |
-|---|---|---|
-| `id` | INT | User ID |
-| `name` | VARCHAR(255) | User name |
-| ... | ... | ... |
+| Column              | Data Type       | Description                                                                 |
+|---------------------|-----------------|-----------------------------------------------------------------------------|
+| `id`                | INT             | Primary key, unique identifier for each salary record.                      |
+| `employee_id`       | INT             | Foreign key referencing the employee.                                      |
+| `base_salary`       | DECIMAL(10,2)   | The employee's base salary amount.                                          |
+| `effective_date`    | DATE            | The date from which the salary is effective.                                |
+| `created_at`        | TIMESTAMP       | Timestamp when the salary record was created.                               |
+| `last_updated_at`   | TIMESTAMP       | Timestamp when the salary record was last updated.                          |
+
+**payroll_deductions Table**
+
+| Column              | Data Type       | Description                                                                 |
+|---------------------|-----------------|-----------------------------------------------------------------------------|
+| `id`                | INT             | Primary key, unique identifier for each deduction.                         |
+| `payroll_id`        | INT             | Foreign key referencing the payroll record.                                |
+| `deduction_type`    | ENUM            | Type of deduction: TAX, INSURANCE, PENSION, OTHER.                         |
+| `amount`            | DECIMAL(10,2)   | The amount deducted from the payroll.                                       |
+
+**payment_details Table**
+
+| Column                  | Data Type       | Description                                                                |
+|-------------------------|-----------------|----------------------------------------------------------------------------|
+| `employee_id`           | INT             | Primary key, references the employee associated with the payment details.   |
+| `payment_method`        | ENUM            | Payment method: BANK_TRANSFER or CHECK.                                    |
+| `account_holder_name`   | VARCHAR(255)    | Name of the account holder (optional).                                     |
+| `encrypted_bank_account`| VARBINARY(255)  | Encrypted bank account number (EU: IBAN).                                   |
+| `created_at`            | TIMESTAMP       | Timestamp when the payment record was created.                              |
+| `last_updated_at`       | TIMESTAMP       | Timestamp when the payment record was last updated.                         |
+
+**employee_benefits Table**
+
+| Column              | Data Type       | Description                                                                 |
+|---------------------|-----------------|-----------------------------------------------------------------------------|
+| `id`                | INT             | Primary key, unique identifier for each benefit record.                    |
+| `employee_id`       | INT             | Foreign key referencing the employee.                                      |
+| `benefit_type`      | ENUM            | Type of benefit: HEALTH_INSURANCE, PENSION, PAID_LEAVE, OTHER.             |
+| `start_date`        | DATE            | The date the benefit starts.                                                |
+| `end_date`          | DATE            | The date the benefit ends (optional).                                       |
+| `amount`            | DECIMAL(10,2)   | The amount associated with the benefit.                                     |
+
+**user_employee_link Table**
+
+| Column              | Data Type       | Description                                                                 |
+|---------------------|-----------------|-----------------------------------------------------------------------------|
+| `user_id`           | INT             | Foreign key referencing the user who is linked to the employee.            |
+| `employee_id`       | INT             | Foreign key referencing the employee associated with the user.             |
+| `created_at`        | TIMESTAMP       | Timestamp when the link was created.                                        |
+
+---
+
+### Foreign Key Relationships
+
+- `salaries.employee_id` references `employees.id`
+- `payroll_deductions.payroll_id` references `payroll.id`
+- `payment_details.employee_id` references `employees.id`
+- `employee_benefits.employee_id` references `employees.id`
+- `user_employee_link.user_id` references `users.id`
+- `user_employee_link.employee_id` references `employees.id`
+
+---
 
 ## 5. Backup and Recovery

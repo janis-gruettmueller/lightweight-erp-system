@@ -1,26 +1,33 @@
-#!/bin/bash
+##########################################################
+# File: setup.sh                                         #
+# Version: 1.0                                           #
+# Author: Janis Grüttmüller on 11.03.2025                #
+# Description: script to setup docker, docker-compose    #
+# and copy all necessary files on the EC2 instanc        #
+#                                                        #
+# change history:                                        #
+# 11.03.2025 - initial version                           #
+##########################################################
 
+#!/bin/bash
 set -e # Exit on Error
 
-# Load variables from .env file
+# Load variables from .env file if 
 if [ -f .env ]; then
   source .env
-else
-  echo "Error: .env file not found!"
-  exit 1
 fi
 
 # define file path and set variables
-ENV_FILE=".env"
+ENV_FILE="secrets/.env"
+EC2_SSH_KEY="secrets/AWS_EC2_ACCESS_KEY.pem"
 
-# copy all necessary files and scripts
+# Step 1: copy all necessary files and scripts to EC2 instance
 echo "Copying files to EC2 instance..."
-scp -i $AWS_SSH_KEY -o StrictHostKeyChecking=no $ENV_FILE $EC2_USER@$EC2_PUBLIC_IP:/home/ubuntu/
-scp -i $AWS_SSH_KEY -o StrictHostKeyChecking=no $BACKUP_SCRIPT $EC2_USER@$EC2_PUBLIC_IP:/home/ubuntu/
+scp -i $EC2_SSH_KEYY -o StrictHostKeyChecking=no $ENV_FILE $EC2_USER@$EC2_EC2_PUBLIC_IP:/home/ubuntu/
 
 # Connect to EC2 and update & upgrade the system
 echo "Connecting to EC2 and updating system..."
-ssh -i $AWS_SSH_KEY $EC2_USER@$EC2_PUBLIC_IP <<EOF
+ssh -i $EC2_SSH_KEY $EC2_USER@$EC2_PUBLIC_IP <<EOF
     # Update and upgrade the system
     sudo apt update && sudo apt upgrade -y
     
@@ -42,18 +49,19 @@ ssh -i $AWS_SSH_KEY $EC2_USER@$EC2_PUBLIC_IP <<EOF
     docker-compose --version
     echo "Docker and Docker Compose installed successfully!"
 
-    # Setting up cronjobs
-    mkdir -p ~/logs
+    # uncomment in case cronjobs are necessary
+    # Create directory for cronjob error logs
+    # mkdir -p ~/logs
 
-    # Automating Tasks with Cronjobs
-    chmod +x ~/backup_rds_prod_to_s3.sh
+    # Make scripts executable
+    # chmod +x ~/my-script.sh
 
-    echo "Setting up Cronjobs..."
-    (crontab -l 2>/dev/null; echo "0 22 * * 0 ~/backup_rds_prod_to_s3.sh") | crontab -
+    # echo "Setting up Cronjobs..."
+    # (crontab -l 2>/dev/null; echo "0 22 * * 0 ~/my-script.sh") | crontab -
 
     # ... more cronjobs (onboarding, offboarding, etl-pipeline)
 
-    echo "Cronjobs set up successfully!"
+    # echo "Cronjobs set up successfully!"
 EOF
 
 echo "EC2 setup completed!"
