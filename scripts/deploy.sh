@@ -15,16 +15,26 @@ set -e  # Exit if any command fails
 # Configuration Variables
 TEMP_SSH_KEY="AWS_EC2_ACCESS_KEY_TEMP.pem"
 DOCKER_COMPOSE_FILE="docker-compose.yml"
+ENV_FILE=".env"
 
 # Step 1: Save GitHub Secret (SSH Key) to a File & Set Permissions
 cat "$AWS_EC2_ACCESS_KEY" > $TEMP_SSH_KEY
 chmod 600 $TEMP_SSH_KEY  # Secure the key file
 
-# Step 2: Copy current docker-compose.yml file to EC2 and replace old file
-echo "Copying files to EC2 instance..."
-scp -i $EC2_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $EC2_USER@$EC2_PUBLIC_IP:/home/ubuntu/
+# Step 2: Create .env file with GitHub Action Secrets and Variables
+echo "Creating .env file with environment variables..."
+echo "RDS_MYSQL_USER=${RDS_MYSQL_USER}" >> $ENV_FILE
+echo "RDS_MYSQL_PASSWORD=${RDS_MYSQL_PASSWORD}" >> $ENV_FILE
+echo "RDS_MYSQL_ENDPOINT=${RDS_MYSQL_ENDPOINT}" >> $ENV_FILE
+echo "RDS_MYSQL_PORT=${RDS_MYSQL_PORT}" >> $ENV_FILE
+echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAM}" >> $ENV_FILE
+echo "EC2_PUBLIC_IP=${EC2_PUBLIC_IP}" >> $ENV_FILE
 
-# Step 3: SSH into EC2 and deploy with docker-compose
+# Step 3: Copy .env and docker-compose.yml to EC2
+echo "Copying .env and docker-compose.yml to EC2 instance..."
+scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE $EC2_USER@$EC2_PUBLIC_IP:/home/ubuntu/
+
+# Step 4: SSH into EC2 and deploy with docker-compose
 echo "Connecting to EC2 instance and deploying images with docker-compose..."
 ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_PUBLIC_IP << EOF
   cd /home/ubuntu
@@ -41,7 +51,8 @@ ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_PUBLIC_IP << EOF
   echo "Deployment completed!"
 EOF
 
-# Step 4: Cleanup SSH Key
+# Step 5: Cleanup SSH Key and .env file
 rm -f $TEMP_SSH_KEY
+rm -f $ENV_FILE
 
 echo "Successfully Deployed!"

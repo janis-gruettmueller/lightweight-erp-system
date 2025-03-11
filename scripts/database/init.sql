@@ -517,19 +517,6 @@ END $$
 
 DELIMITER ;
 
-/* ------------------------------- triggers for Password Management -------------------------------- */
-
-DELIMITER $$
-
-CREATE TRIGGER update_password_history
-AFTER UPDATE ON password_history
-FOR EACH ROW
-BEGIN
-
-END $$
-
-DELIMITER ;
-
 /* ------------------------------- triggers for the HR Modul tables -------------------------------- */
 
 DELIMITER $$

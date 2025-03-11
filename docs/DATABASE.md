@@ -743,24 +743,6 @@
     DELIMITER ;
     ```
 
-**Triggers for Password Management**
-
-* **`update_password_history`**
-    * **Purpose:** (No specific purpose mentioned in the code. It's an empty trigger.)
-    * **SQL Code:**
-    ```sql
-    DELIMITER $$
-
-    CREATE TRIGGER update_password_history
-    AFTER UPDATE ON password_history
-    FOR EACH ROW
-    BEGIN
-
-    END $$
-
-    DELIMITER ;
-    ```
-
 **Triggers for HR Module**
 
 * **`set_retention_period`**
