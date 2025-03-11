@@ -12,11 +12,6 @@
 #!/bin/bash
 set -e  # Exit if any command fails
 
-# Set up JDK 17 for backend
-echo "Setting up JDK 17..."
-sudo apt update
-sudo apt install -y openjdk-17-jdk
-
 # Build backend with Maven
 echo "Building backend with Maven..."
 mvn clean package
@@ -28,11 +23,6 @@ echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --passwor
 # Build backend Docker image
 echo "Building backend Docker image..."
 docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:${GITHUB_RUN_NUMBER}" \
-    --build-arg JWT_SECRET_KEY="$JWT_SECRET_KEY" \
-    --build-arg RDS_MYSQL_USER="$RDS_MYSQL_USER" \
-    --build-arg RDS_MYSQL_PASSWORD="$RDS_MYSQL_PASSWORD" \
-    --build-arg RDS_MYSQL_ENDPOINT="$RDS_MYSQL_ENDPOINT" \
-    --build-arg RDS_MYSQL_PORT="$RDS_MYSQL_PORT" \
     -f backend/Dockerfile backend
 
 # Build frontend Docker image
