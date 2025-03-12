@@ -7,3 +7,15 @@
 .github/workflows/deploy_v2.yml
 
 .env
+
+
+/backend/src/main/java/com/leanx/app/service/EmailService.java
+/backend/src/main/java/com/leanx/app/service/jobs/BackupDatabaseJob.java
+/backend/src/main/java/com/leanx/app/service/jobs/UserDeactivationOffboardingJob.java
+/backend/src/main/java/com/leanx/app/service/modules/employee/TimesheetSelfService.java
+/backend/src/main/java/com/leanx/app/service/modules/hr_ops/TimesheetService.java
+
+/backend/src/main/java/com/leanx/app/security
+
+/backend/src/main/java/com/leanx/app/api/hr_ops/TimesheetController.java
+/backend/src/main/java/com/leanx/app/api/employee/TimesheetSelfController.java
