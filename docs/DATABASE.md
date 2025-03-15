@@ -172,9 +172,9 @@
     ```sql
     CREATE TABLE configurations (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        key VARCHAR(255) UNIQUE NOT NULL,
-        value VARCHAR(255) NOT NULL,
-        category ENUM('PASSWORD_SETTINGS', 'EMAIL_SETTINGS', 'SECURITY_SETTINGS', 'SYSTEM_SETTINGS') NOT NULL,
+        config_key VARCHAR(255) UNIQUE NOT NULL,
+        config_value VARCHAR(255) NOT NULL,
+        config_category ENUM('PASSWORD_SETTINGS', 'EMAIL_SETTINGS', 'SECURITY_SETTINGS', 'SYSTEM_SETTINGS') NOT NULL,
         description TEXT,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         last_updated_by INT NOT NULL,
@@ -579,6 +579,14 @@
     ```sql
     CREATE VIEW password_settings_view AS
     SELECT * FROM configurations WHERE config_category = 'PASSWORD_SETTINGS';
+    ```
+
+* **`password_history_view`**
+    * **Purpose:** Displays the password history from the password_history table.
+    * **SQL Code:**
+    ```sql
+    CREATE VIEW password_history_view AS
+    SELECT user_id, password_hash, created_at FROM password_history;
     ```
 
 ### Triggers
