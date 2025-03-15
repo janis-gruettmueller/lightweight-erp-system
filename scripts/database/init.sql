@@ -350,6 +350,10 @@ CREATE VIEW password_settings_view AS
 SELECT * FROM configurations WHERE config_category = 'PASSWORD_SETTINGS'; 
 
 
+CREATE VIEW password_history_view AS
+SELECT user_id, password_hash, created_at FROM password_history; 
+
+
 /* =============================================================================================== *
  *                                    define database triggers                                     *
  * =============================================================================================== */

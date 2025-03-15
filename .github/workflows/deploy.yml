@@ -59,9 +59,10 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           EC2_USER: ${{ vars.EC2_USER }}
-          EC2_PUBLIC_IP: ${{ vars.EC2_PUBLIC_IP }}
+          EC2_ELASTIC_IP: ${{ vars.EC2_ELASTIC_IP }}
           AWS_EC2_ACCESS_KEY: ${{ secrets.AWS_EC2_ACCESS_KEY }}
           RDS_MYSQL_USER: ${{ secrets.RDS_MYSQL_USER }}
           RDS_MYSQL_PASSWORD: ${{ secrets.RDS_MYSQL_PASSWORD }}
           RDS_MYSQL_ENDPOINT: ${{ vars.RDS_MYSQL_ENDPOINT }}
           RDS_MYSQL_PORT: ${{ vars.RDS_MYSQL_PORT }}
+          RDS_MYSQL_DB_NAME: ${{ vars.RDS_MYSQL_DB_NAME }}
