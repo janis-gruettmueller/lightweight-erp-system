@@ -4,10 +4,13 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.leanx.app.model.User;
 import com.leanx.app.repository.PasswordHistoryViewRepository;
 import com.leanx.app.repository.PasswordSettingsViewRepository;
+import com.leanx.app.repository.ViewRepository;
 import com.leanx.app.service.modules.user_admin.UserService;
 import com.leanx.app.utils.AuthenticationUtils;
 
@@ -16,11 +19,14 @@ import com.leanx.app.utils.AuthenticationUtils;
  * including password validation, login attempts, and password changes.
  * It handles user authentication, password history checking, password policy enforcement, and user lockout logic.
  */
-public final class AuthenticationService {
+public class AuthenticationService {
 
-    private final Map<String, String> passwordSettings;
+    private static final Logger logger = Logger.getLogger(ViewRepository.class.getName());
+
+    private final PasswordSettingsViewRepository passwordSettingsViewRepository;
     private final AuthenticationUtils authenticationUtils;
     private final UserService userService;
+    private Map<String, String> passwordSettings;
 
     /**
      * Constructs an instance of {@code AuthenticationService}.
@@ -28,10 +34,17 @@ public final class AuthenticationService {
      * 
      * @throws SQLException if an SQL exception occurs during initialization.
      */
-    public AuthenticationService() throws SQLException {
-        this.passwordSettings = PasswordSettingsViewRepository.loadPasswordSettings();
+    public AuthenticationService() {
+        this.passwordSettingsViewRepository = new PasswordSettingsViewRepository();
+        try {
+            this.passwordSettings = this.passwordSettingsViewRepository.loadPasswordSettings();
+            logger.log(Level.INFO, "Loaded {0} password settings!", this.passwordSettings.size());
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+        }
         this.authenticationUtils = new AuthenticationUtils();
         this.userService = new UserService();
+        
     }
 
     /**
@@ -42,9 +55,8 @@ public final class AuthenticationService {
      * @return {@code true} if the user is logging in for the first time, {@code false} otherwise.
      * @throws SQLException if a database error occurs while retrieving user information.
      */
-    public boolean isFirstLogin(String username) throws SQLException {
-        User user = userService.getUserbyName(username);
-        return userService.getLastLoginAt(user.getId()) == null;
+    public boolean isFirstLogin(Object loginIdentifier) throws SQLException, IllegalArgumentException {
+        return userService.getUserByIdentifier(loginIdentifier).getLastLoginAt() == null;
     }
 
     /**
@@ -57,32 +69,43 @@ public final class AuthenticationService {
      * @return {@code true} if the authentication is successful, {@code false} otherwise.
      * @throws SQLException if an SQL exception occurs during the authentication process.
      */
-    public boolean authenticate(String username, String password) throws SQLException {
-        User user = userService.getUserbyName(username);
+    public boolean authenticate(String username, String password) {
+        User user = null; 
+        try {
+            user = userService.getUserByIdentifier(username);
+        } catch (IllegalArgumentException | SQLException e) {
+            logger.log(Level.SEVERE, e.getMessage());
+        }
     
         if (user == null) {
+            logger.log(Level.WARNING, "No user found!");
             return false;
         }
     
         if (user.getStatus() == User.UserStatus.LOCKED) {
+            logger.log(Level.WARNING, "User is locked!");
             return false;
         }
     
         if (user.getNumFailedLoginAttempts() >= Integer.valueOf(passwordSettings.get("password.num_failed_attempts_before_lockout"))) {
+            logger.log(Level.WARNING, "User exceded number of failed login attempts!");
             userService.lockUser(user.getId());
             return false;
         }
     
         if (user.getPasswordExpiryDate() != null && user.getPasswordExpiryDate().before(new Date(System.currentTimeMillis()))) {
-            throw new IllegalStateException("Password has expired! Please reset your password.");
+            logger.log(Level.WARNING, "Password is expired!");
+            return false;
         }
     
         if (!authenticationUtils.checkPassword(password, user.getPasswordHash())) {
             userService.incrementNumFailedLoginAttempts(user.getId(), user.getNumFailedLoginAttempts());
+            logger.log(Level.WARNING, "Incorrect Password!");
             return false;
         }
         
         userService.resetNumFailedLoginAttempts(user.getId());
+        logger.log(Level.INFO, "Successfully authenticated!");
         return true;
     }
 
@@ -127,14 +150,50 @@ public final class AuthenticationService {
      * This method validates the new password, hashes it, and updates the user's password in the database.
      * 
      * @param user The user whose password is being changed.
+     * @param oldPassword The old password to be changed.
      * @param newPassword The new password to be set.
      * @return {@code true} if the password is successfully changed, {@code false} otherwise.
      * @throws SQLException if a database error occurs during the password change process.
      * @throws IllegalArgumentException if the user or password is invalid.
      */
-    public boolean changePassword(User user, String newPassword) throws SQLException {
+    public boolean changePassword(User user, String oldPassword, String newPassword) throws SQLException {
+        if (user == null || newPassword == null || newPassword.isEmpty() || oldPassword == null || oldPassword.isEmpty()) {
+            throw new IllegalArgumentException("Missing or illegal argument!");
+        }
+    
+        // Verify old password
+        if (!authenticationUtils.checkPassword(oldPassword, user.getPasswordHash())) {
+            throw new SecurityException("Old password is incorrect!");
+        }
+    
+        // Validate new password
+        if (!isValidPassword(user.getId(), newPassword)) {
+            throw new IllegalArgumentException("New password does not meet the security requirements!");
+        }
+    
+        String hashedPassword = authenticationUtils.hashPassword(newPassword);
+        if (user.getPasswordHash().equals(hashedPassword)) {
+            throw new IllegalArgumentException("New password must be different from the old password!");
+        }
+    
+        userService.updatePassword(user.getId(), hashedPassword);
+        return true;
+    }
+
+
+    /**
+     * Sets the initial password after first login.
+     * This method validates the new password, hashes it, and updates the user's password in the database.
+     * 
+     * @param user The user whose password is being changed.
+     * @param newPassword The new password to be set.
+     * @return {@code true} if the password is successfully changed, {@code false} otherwise.
+     * @throws SQLException if a database error occurs during the password change process.
+     * @throws IllegalArgumentException if the user or password is invalid.
+     */
+    public boolean setInitialPassword(User user, String newPassword) throws SQLException {
         if (user == null || newPassword == null || newPassword.isEmpty()) {
-            throw new IllegalArgumentException("User or password cannot be null/empty!");
+            throw new IllegalArgumentException("Missing or illegal argument!");
         }
     
         if (!isValidPassword(user.getId(), newPassword)) {

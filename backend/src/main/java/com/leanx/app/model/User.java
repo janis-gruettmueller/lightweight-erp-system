@@ -12,7 +12,6 @@ public class User implements Serializable {
     private String name;
     private UserStatus status;
     private UserType type;
-    private Boolean isVerified;
     private String passwordHash;
     private Date passwordExpiryDate;
     private Integer numFailedLoginAttempts;
@@ -35,11 +34,10 @@ public class User implements Serializable {
     public User() {}
 
     // Constructor with all fields except auto-generated and default values
-    public User(String username, UserStatus status, UserType type, Boolean isVerified, String passwordHash, Date passwordExpiryDate, Date validUntil, Integer createdBy) {
+    public User(String username, UserStatus status, UserType type, String passwordHash, Date passwordExpiryDate, Date validUntil, Integer createdBy) {
         this.name = username; 
         this.status = status; 
         this.type = type; 
-        this.isVerified = isVerified; 
         this.passwordHash = passwordHash; 
         this.passwordExpiryDate = passwordExpiryDate;
         this.validUntil = validUntil; 
@@ -51,7 +49,6 @@ public class User implements Serializable {
     public String getName() { return name; }
     public UserStatus getStatus() { return status; }
     public UserType getType() { return type; }
-    public Boolean getIsVerified() { return isVerified; }
     public String getPasswordHash() { return passwordHash; }
     public Date getPasswordExpiryDate() { return passwordExpiryDate; }
     public Integer getNumFailedLoginAttempts() { return numFailedLoginAttempts; }
@@ -67,7 +64,6 @@ public class User implements Serializable {
     public void setName(String name) { this.name = name; }
     public void setStatus(UserStatus status) { this.status = status; }
     public void setType(UserType type) { this.type = type; }
-    public void setIsVerified(Boolean isVerified) { this.isVerified = isVerified; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void setPasswordExpiryDate(Date passwordExpiryDate) { this.passwordExpiryDate = passwordExpiryDate; }
     public void setNumFailedLoginAttempts(Integer numFailedLoginAttempts) { this.numFailedLoginAttempts = numFailedLoginAttempts; }
@@ -85,7 +81,6 @@ public class User implements Serializable {
                 ", name=" + name + 
                 ", status=" + status +
                 ", type=" + type +
-                ", isVerified=" + isVerified +
                 ", passwordHash=" + passwordHash +
                 ", passwordExpiryDate=" + passwordExpiryDate +
                 ", numFailedLoginAttempts=" + numFailedLoginAttempts +

@@ -14,7 +14,7 @@ public class PasswordSettingsViewRepository extends ViewRepository<PasswordSetti
     }
 
     public List<PasswordSettingsView> findAllPasswordSettings() throws SQLException {
-        return findAll("passwordSettingsView", rs -> {
+        return findAll("password_settings_view", rs -> {
             try {
                 return new PasswordSettingsView(rs);
             } catch (SQLException e) {
@@ -23,11 +23,10 @@ public class PasswordSettingsViewRepository extends ViewRepository<PasswordSetti
         });
     }
 
-    public static Map<String, String> loadPasswordSettings() throws SQLException {
-        PasswordSettingsViewRepository pwSettingsRepo = new PasswordSettingsViewRepository();
+    public Map<String, String> loadPasswordSettings() throws SQLException {
         Map<String, String> pwSettings = new HashMap<>();
 
-        for (PasswordSettingsView setting : pwSettingsRepo.findAllPasswordSettings()) {
+        for (PasswordSettingsView setting : findAllPasswordSettings()) {
             pwSettings.put(setting.getConfigKey(), setting.getConfigValue());
         }
 

@@ -1,10 +1,13 @@
 package com.leanx.app.model.views;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-public class PasswordHistoryView {
+public class PasswordHistoryView implements Serializable {
+
+    private static final long serialVersionUID = 10L;
 
     private final Integer userId;
     private final String passwordHash;
@@ -20,4 +23,13 @@ public class PasswordHistoryView {
     public String getPasswordHash() { return this.passwordHash; }
     public Timestamp getCreatedAt() { return this.createdAt; }
 
+
+    @Override
+    public String toString() {
+        return "PasswordHistoryView{" +
+                "userId=" + userId +
+                ", passwordHash='" + passwordHash + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
