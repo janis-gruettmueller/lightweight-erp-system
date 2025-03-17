@@ -8,6 +8,8 @@
 
 .env
 
+/scripts/check-build.sh
+
 
 /backend/src/main/java/com/leanx/app/service/EmailService.java
 /backend/src/main/java/com/leanx/app/service/jobs/BackupDatabaseJob.java
