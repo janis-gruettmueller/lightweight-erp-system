@@ -9,7 +9,7 @@ import com.leanx.app.model.Employee;
 public class EmployeeCrudRepository implements CrudRepository<Employee> {
     
     @Override
-    public void create(Employee employee) throws IllegalArgumentException, SQLException {
+    public int create(Employee employee) throws IllegalArgumentException, SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'create'");
     }
@@ -21,13 +21,13 @@ public class EmployeeCrudRepository implements CrudRepository<Employee> {
     }
 
     @Override
-    public void update(Integer id, Map<String, Object> updates) throws IllegalArgumentException, SQLException {
+    public int update(Integer id, Map<String, Object> updates) throws IllegalArgumentException, SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
 
     @Override
-    public void delete(Integer id) throws IllegalArgumentException, SQLException {
+    public int delete(Integer id) throws IllegalArgumentException, SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'delete'");
     }

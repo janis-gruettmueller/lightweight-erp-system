@@ -30,8 +30,8 @@ public class PasswordHistoryViewRepository extends ViewRepository<PasswordHistor
         List<String> passwordHistory = new ArrayList<>();
         String sql = "SELECT hashed_password FROM password_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?";
     
-        try (Connection conn = DatabaseUtils.getMySQLConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+            PreparedStatement stmt = c.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             stmt.setInt(2, historySize);
 

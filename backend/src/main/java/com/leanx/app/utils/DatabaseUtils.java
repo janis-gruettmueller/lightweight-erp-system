@@ -3,31 +3,49 @@ package com.leanx.app.utils;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DatabaseUtils {
-    private static final String RDS_MYSQL_ENDPOINT = "leanx-erp-db-server-eu-north-1b.cpkae4uasaxr.eu-north-1.rds.amazonaws.com";
-    private static final String RDS_MYSQL_PORT = "3306";
-    private static final String DB_USER = "admin";
-    private static final String DB_PASSWORD = "admin-mysqlDB";
-    public static final String DB_NAME = "leanx_erp_prod";
-    private static final String JDBC_URL = "jdbc:mysql://" + RDS_MYSQL_ENDPOINT + ":" + RDS_MYSQL_PORT + "/";
 
-    /*
+    private static final Logger logger = Logger.getLogger(DatabaseUtils.class.getName());
+
     private static final String JDBC_URL = "jdbc:mysql://" + System.getenv("RDS_MYSQL_ENDPOINT") + ":" + System.getenv("RDS_MYSQL_PORT") + "/";
     private static final String DB_USER = System.getenv("RDS_MYSQL_USER");
     private static final String DB_PASSWORD = System.getenv("RDS_MYSQL_PASSWORD");
     public static final String DB_NAME = System.getenv("RDS_MYSQL_DB_NAME");
-    */
+
+    // Static block to load the MySQL JDBC driver
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            logger.info("MySQL JDBC Driver loaded successfully.");
+        } catch (ClassNotFoundException e) {
+            logger.log(Level.SEVERE, "Failed to load MySQL JDBC Driver: {0}", e.getMessage());
+            throw new RuntimeException("Failed to load MySQL JDBC Driver", e);
+        }
+    }
 
     // Method to connect to database
     public static Connection getMySQLConnection() throws SQLException {
+        logger.log(Level.INFO, "Attempting to connect to database: {0}", JDBC_URL + DB_NAME);
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("JDBC Driver not found!", e);
+            Connection c = DriverManager.getConnection(JDBC_URL + DB_NAME, DB_USER, DB_PASSWORD);
+            logger.info("Database connection successful!");
+            return c;
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Failed to connect to database: {0}", e.getMessage());
+            throw e;
         }
-        return DriverManager.getConnection(JDBC_URL + DB_NAME, DB_USER, DB_PASSWORD);
     }
-    
+
+    // Method to test the database connection (optional)
+    public static boolean testMySQLConnection() {
+        try (Connection connection = getMySQLConnection()) {
+            return connection != null && connection.isValid(5); // Test connection with a 5-second timeout
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Database connection test failed: {0}", e.getMessage());
+            return false;
+        }
+    }  
 }

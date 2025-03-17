@@ -1,77 +1,89 @@
 package com.leanx.app.service.modules.user_admin;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.Map;
 
 import com.leanx.app.model.User;
+import com.leanx.app.repository.StoredProceduresRepository;
 import com.leanx.app.repository.UserCrudRepository;
 
 public class UserService {
 
     private final UserCrudRepository userCrudRepository = new UserCrudRepository();
+    private final StoredProceduresRepository storedProceduresRepository = new StoredProceduresRepository();
 
 
-    public User getUserbyName(String username) throws SQLException {
-        return userCrudRepository.read(username);
+    public int getUserId(String username) {
+        try {
+            User user = userCrudRepository.read(username);
+            return user.getId();
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+            return -1;
+        }
     }
 
-    public User getUserById(Integer userId) throws SQLException {
-        return userCrudRepository.read(userId);
+    public User getUserByIdentifier(Object identifier) throws SQLException, IllegalArgumentException {
+        if (identifier instanceof String username) {
+            return userCrudRepository.read(username);
+        }
+            
+        if (identifier instanceof Integer userId) {
+            return userCrudRepository.read(userId);
+        }
+
+        throw new IllegalArgumentException("Invalid identifier type! Expected String or Integer.");
     }
 
-    public Timestamp getLastLoginAt(Integer userId) throws SQLException {
-        User user = userCrudRepository.read(userId);
-
-        return user.getLastLoginAt();
-    }
-
-    public boolean updatePassword(Integer userId, String hashedPassword) throws SQLException {
+    public boolean updatePassword(Integer userId, String hashedPassword) throws IllegalArgumentException {
         Map<String, Object> updates = Map.of("password_hash", hashedPassword); // Map.of -> imutable Map (Java 9+)
     
         try {
-            userCrudRepository.update(userId, updates);
-            return true;
+            int rowsEffected = userCrudRepository.update(userId, updates);
+            return rowsEffected > 0;
         } catch (SQLException e) {
             System.err.println("Failed to update password: " + e.getMessage());
-            throw e; 
+            return false;
         }
     }
 
-    public boolean incrementNumFailedLoginAttempts(Integer userId, Integer numFailedAttempts) throws IllegalArgumentException, SQLException {
+    public boolean incrementNumFailedLoginAttempts(Integer userId, Integer numFailedAttempts) throws IllegalArgumentException {
         Map<String, Object> updates = Map.of("num_failed_login_attempts", numFailedAttempts + 1);
 
         try {
-            userCrudRepository.update(userId, updates);
-            return true;
+            int affectedRows = userCrudRepository.update(userId, updates);
+            return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Failed to increment number of failed login attempts: " + e.getMessage());
-            throw e; 
+            return false;
         }
     }
 
-    public boolean resetNumFailedLoginAttempts(Integer userId) throws IllegalArgumentException, SQLException {
+    public boolean resetNumFailedLoginAttempts(Integer userId) throws IllegalArgumentException {
         Map<String, Object> updates = Map.of("num_failed_login_attempts", 0);
 
         try {
-            userCrudRepository.update(userId, updates);
-            return true;
+            int affectedRows = userCrudRepository.update(userId, updates);
+            return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Failed to reset number of failed login attempts: " + e.getMessage());
-            throw e; 
+            return false;
         }
     }
 
-    public boolean lockUser(Integer userId) throws IllegalArgumentException, SQLException {
+    public boolean lockUser(Integer userId) throws IllegalArgumentException {
         Map<String, Object> updates = Map.of("status", "LOCKED");
 
         try {
-            userCrudRepository.update(userId, updates);
-            return true;
+            int affectedRows = userCrudRepository.update(userId, updates);
+            return affectedRows > 0;
         } catch (SQLException e) {
             System.err.println("Failed to update user status to LOCKED: " + e.getMessage());
-            throw e; 
+            return false;
         }
     }
-    
+
+    public boolean deactivateUser(Integer userId, Integer currentUserId) throws IllegalArgumentException {
+        return storedProceduresRepository.callDeactivateUserAccount(userId, currentUserId);
+    }
 }
