@@ -18,12 +18,7 @@ if [ -f .env ]; then
 fi
 
 # define file path and set variables
-ENV_FILE="secrets/.env"
 EC2_SSH_KEY="secrets/AWS_EC2_ACCESS_KEY.pem"
-
-# Step 1: copy all necessary files and scripts to EC2 instance
-echo "Copying files to EC2 instance..."
-scp -i $EC2_SSH_KEY -o StrictHostKeyChecking=no $ENV_FILE $EC2_USER@$EC2_ELASTIC_IP:/home/ubuntu/
 
 # Connect to EC2 and update & upgrade the system
 echo "Connecting to EC2 and updating system..."
@@ -46,7 +41,7 @@ ssh -i $EC2_SSH_KEY $EC2_USER@$EC2_ELASTIC_IP <<EOF
     sudo chmod +x /usr/local/bin/docker-compose
 
     # Verify Docker Compose installation
-    docker-compose --version
+    sudo docker-compose --version
     echo "Docker and Docker Compose installed successfully!"
 
     # uncomment in case cronjobs are necessary
