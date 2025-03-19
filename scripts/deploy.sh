@@ -23,13 +23,13 @@ chmod 600 $TEMP_SSH_KEY  # Secure the key file
 
 # Step 2: Create .env file with GitHub Action Secrets and Variables
 echo "Creating .env file with environment variables..."
+echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> $ENV_FILE
+echo "EC2_ELASTIC_IP=${EC2_ELASTIC_IP}" >> $ENV_FILE
 echo "RDS_MYSQL_USER=${RDS_MYSQL_USER}" >> $ENV_FILE
 echo "RDS_MYSQL_PASSWORD=${RDS_MYSQL_PASSWORD}" >> $ENV_FILE
 echo "RDS_MYSQL_ENDPOINT=${RDS_MYSQL_ENDPOINT}" >> $ENV_FILE
 echo "RDS_MYSQL_PORT=${RDS_MYSQL_PORT}" >> $ENV_FILE
 echo "RDS_MYSQL_DB_NAME=${RDS_MYSQL_DB_NAME}" >> $ENV_FILE
-echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> $ENV_FILE
-echo "EC2_ELASTIC_IP=${EC2_ELASTIC_IP}" >> $ENV_FILE
 
 # Step 3: Copy .env and docker-compose.yml to EC2
 echo "Copying .env and docker-compose.yml to EC2 instance..."
@@ -39,7 +39,7 @@ scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE 
 echo "Connecting to EC2 instance and deploying images with docker-compose..."
 ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF
   cd /home/ubuntu
-  
+
   echo "Set correct permissions for .env file..."
   sudo chmod 644 .env
 
