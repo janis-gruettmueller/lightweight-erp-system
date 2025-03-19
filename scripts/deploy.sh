@@ -37,7 +37,10 @@ scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE 
 
 # Step 4: SSH into EC2 and deploy with docker-compose
 echo "Connecting to EC2 instance and deploying images with docker-compose..."
-ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF 
+ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF
+  echo "Set correct permissions for .env file..."
+  sudo chmod 644 .env
+
   echo "Pulling latest Docker images..."
   sudo docker-compose pull
 
