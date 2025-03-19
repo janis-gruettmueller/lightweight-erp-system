@@ -1,4 +1,4 @@
-package com.leanx.app.service;
+package com.leanx.app.service.modules.user.auth;
 
 import java.sql.Date;
 import java.sql.SQLException;
@@ -7,15 +7,16 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.leanx.app.exceptions.AccountLockedException;
-import com.leanx.app.exceptions.FirstLoginException;
-import com.leanx.app.exceptions.PasswordExpiredException;
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.leanx.app.model.User;
 import com.leanx.app.repository.PasswordHistoryViewRepository;
 import com.leanx.app.repository.ViewRepository;
-import com.leanx.app.security.SecurityConfig;
-import com.leanx.app.service.modules.user_admin.UserService;
-import com.leanx.app.utils.AuthenticationUtils;
+import com.leanx.app.service.modules.system.configs.SecurityConfig;
+import com.leanx.app.service.modules.user.admin.UserService;
+import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;
+import com.leanx.app.service.modules.user.auth.exceptions.FirstLoginException;
+import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredException;
 
 /**
  * The {@code AuthenticationService} class provides functionalities related to user authentication,
@@ -27,8 +28,6 @@ public class AuthenticationService {
     private static final Logger logger = Logger.getLogger(ViewRepository.class.getName());
 
     private final Map<String, String> passwordSettings = SecurityConfig.PASSWORD_SETTINGS;
-
-    private final AuthenticationUtils authenticationUtils;
     private final UserService userService;
 
     /**
@@ -37,8 +36,26 @@ public class AuthenticationService {
      * 
      */
     public AuthenticationService() {
-        this.authenticationUtils = new AuthenticationUtils();
         this.userService = new UserService();
+    }
+
+       /**
+     * Hashes the plain text password using BCrypt.
+     * @param plainTextPassword The plain text password.
+     * @return The hashed password.
+     */
+    private String hashPassword(String plainTextPassword) {
+        return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
+    }
+
+    /**
+     * Checks if the provided plain text password matches the hashed password.
+     * @param plainTextPassword The plain text password.
+     * @param hashedPassword The password hash of user object.
+     * @return True if passwords match, false otherwise.
+     */
+    private boolean checkPassword(String plainTextPassword, String hashedPassword) {
+        return BCrypt.checkpw(plainTextPassword, hashedPassword);
     }
 
     /**
@@ -82,7 +99,7 @@ public class AuthenticationService {
             throw new PasswordExpiredException("Password has expired. Please reset your password.");
         }
         
-        if (!authenticationUtils.checkPassword(password, user.getPasswordHash())) {
+        if (!this.checkPassword(password, user.getPasswordHash())) {
             userService.incrementNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts());
             logger.log(Level.WARNING, "Incorrect password attempt for username: {0}", username);
             return -1;
@@ -143,7 +160,7 @@ public class AuthenticationService {
             return false;
         }
     
-        String newPasswordHash = authenticationUtils.hashPassword(newPassword);
+        String newPasswordHash = this.hashPassword(newPassword);
         return !inRecentPasswordHistory(userId, newPasswordHash);
     }
 
@@ -174,7 +191,7 @@ public class AuthenticationService {
             throw new IllegalArgumentException("User not found!");
         }
 
-        if (!authenticationUtils.checkPassword(oldPassword, user.getPasswordHash())) {
+        if (!this.checkPassword(oldPassword, user.getPasswordHash())) {
             throw new SecurityException("Authentication failure!");
         }
 
@@ -186,7 +203,7 @@ public class AuthenticationService {
             userService.setIsFirstLoginFalse(user.getId(), 2);
         }
 
-        String newPasswordHash = authenticationUtils.hashPassword(newPassword);
+        String newPasswordHash = this.hashPassword(newPassword);
         return userService.updatePassword(user.getId(), changedBy, newPasswordHash);
     }
 

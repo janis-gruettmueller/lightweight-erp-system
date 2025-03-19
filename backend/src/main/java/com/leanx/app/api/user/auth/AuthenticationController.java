@@ -1,16 +1,16 @@
-package com.leanx.app.api.auth;
+package com.leanx.app.api.user.auth;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.leanx.app.exceptions.AccountLockedException;
-import com.leanx.app.exceptions.FirstLoginException;
-import com.leanx.app.exceptions.PasswordExpiredException;
-import com.leanx.app.security.SecurityConfig;
-import com.leanx.app.service.AuthenticationService;
-import com.leanx.app.service.modules.user_admin.UserService;
+import com.leanx.app.service.modules.system.configs.SecurityConfig;
+import com.leanx.app.service.modules.user.admin.UserService;
+import com.leanx.app.service.modules.user.auth.AuthenticationService;
+import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;
+import com.leanx.app.service.modules.user.auth.exceptions.FirstLoginException;
+import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredException;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
