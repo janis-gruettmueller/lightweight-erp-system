@@ -18,7 +18,7 @@ DOCKER_COMPOSE_FILE=./docker-compose.yml
 ENV_FILE=.env
 
 # Step 1: Save GitHub Secret (SSH Key) to a File & Set Permissions
-cat "$AWS_EC2_ACCESS_KEY" > $TEMP_SSH_KEY
+echo "$AWS_EC2_ACCESS_KEY" > $TEMP_SSH_KEY
 chmod 600 $TEMP_SSH_KEY  # Secure the key file
 
 # Step 2: Create .env file with GitHub Action Secrets and Variables
