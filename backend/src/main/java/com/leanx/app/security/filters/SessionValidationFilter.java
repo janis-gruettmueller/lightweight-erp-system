@@ -1,4 +1,4 @@
-package com.leanx.app.security;
+package com.leanx.app.security.filters;
 
 import java.io.IOException;
 

@@ -1,4 +1,4 @@
-package com.leanx.app.exceptions;
+package com.leanx.app.service.modules.user.auth.exceptions;
 
 public class AccountLockedException extends Exception {
 

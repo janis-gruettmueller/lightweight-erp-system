@@ -1,4 +1,4 @@
-package com.leanx.app.service.modules.user_admin;
+package com.leanx.app.service.modules.user.admin;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
