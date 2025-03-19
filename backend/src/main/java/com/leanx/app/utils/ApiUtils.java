@@ -20,9 +20,14 @@ public class ApiUtils {
         response.getWriter().write("{\"error\": \"" + errorMessage + "\"}");
     }
 
-    public static void sendExceptionResponse(HttpServletResponse response, Exception e) throws IOException {
+    public static void sendExceptionResponse(HttpServletResponse response, String defaultErrorMessage, Exception e) throws IOException {
         logger.log(Level.SEVERE, "Exception occurred: " + e.getMessage(), e);
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        if (defaultErrorMessage != null) {
+            response.getWriter().write("{\"error\": \"" + defaultErrorMessage + "\"}");
+            return;
+        }
+
         response.getWriter().write("{\"error\":  Internal Server Problem! Please try again later\"}");
     }
 

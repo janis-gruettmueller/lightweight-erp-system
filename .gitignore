@@ -4,12 +4,7 @@ frontend/target
 
 secrets
 
-.github/workflows/deploy_v2.yml
-
-.env
-
-scripts/check-local-build.sh
-scripts/check-deploy.sh
+scripts/check-build-local.sh
 
 backend/src/main/java/com/leanx/app/service/EmailService.java
 backend/src/main/java/com/leanx/app/service/jobs/BackupDatabaseJob.java
@@ -24,3 +19,5 @@ backend/src/main/java/com/leanx/app/security/configs/EndpointRolesSecurity.java
 backend/src/main/java/com/leanx/app/api/hr/ops/TimesheetController.java
 backend/src/main/java/com/leanx/app/api/employee/self/TimesheetSelfController.java
 backend/src/main/java/com/leanx/app/api/employee/management/EmployeeController.java
+
+backend/src/main/java/com/leanx/app/api/TestController.java
