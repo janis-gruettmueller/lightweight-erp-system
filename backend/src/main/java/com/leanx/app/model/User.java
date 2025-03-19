@@ -15,6 +15,7 @@ public class User implements Serializable {
     private String passwordHash;
     private Date passwordExpiryDate;
     private Integer numFailedLoginAttempts;
+    private Boolean isFirstLogin;
     private Timestamp lastLoginAt;
     private Date validUntil;
     private Integer createdBy;
@@ -52,6 +53,7 @@ public class User implements Serializable {
     public String getPasswordHash() { return passwordHash; }
     public Date getPasswordExpiryDate() { return passwordExpiryDate; }
     public Integer getNumFailedLoginAttempts() { return numFailedLoginAttempts; }
+    public Boolean isFirstLogin() { return isFirstLogin; }
     public Timestamp getLastLoginAt() { return lastLoginAt; }
     public Date getValidUntil() { return validUntil; }
     public Integer getCreatedBy() { return createdBy; }
@@ -67,6 +69,7 @@ public class User implements Serializable {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public void setPasswordExpiryDate(Date passwordExpiryDate) { this.passwordExpiryDate = passwordExpiryDate; }
     public void setNumFailedLoginAttempts(Integer numFailedLoginAttempts) { this.numFailedLoginAttempts = numFailedLoginAttempts; }
+    public void setIsFirstLogin(Boolean isFirstLogin) { this.isFirstLogin = isFirstLogin; }
     public void setLastLoginAt(Timestamp lastLoginAt) { this.lastLoginAt = lastLoginAt; }
     public void setValidUntil(Date validUntil) { this.validUntil = validUntil; }
     public void setCreatedBy(Integer createdBy) { this.createdBy = createdBy; }
@@ -84,6 +87,7 @@ public class User implements Serializable {
                 ", passwordHash=" + passwordHash +
                 ", passwordExpiryDate=" + passwordExpiryDate +
                 ", numFailedLoginAttempts=" + numFailedLoginAttempts +
+                ", lisFirstLogin=" + isFirstLogin +
                 ", lastLoginAt=" + lastLoginAt +
                 ", validUntil=" + validUntil +
                 ", createdBy=" + createdBy +

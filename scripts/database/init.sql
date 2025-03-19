@@ -52,6 +52,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     password_expiry_date DATE NOT NULL,
     num_failed_login_attempts INT DEFAULT 0,
+    is_first_login BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP DEFAULT NULL,
     valid_until DATE DEFAULT NULL,
     created_by INT NOT NULL DEFAULT 1, -- Default to System user (user_id = 1)
@@ -400,50 +401,50 @@ BEGIN
     IF NEW.status != OLD.status THEN
         -- check if the account was locked
         IF NEW.status = 'LOCKED' THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account locked');
         -- check if the account was deactivated
         ELSEIF NEW.status = 'DEACTIVATED' THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account deactivated');
         -- check if the account was unlocked
         ELSEIF NEW.status = 'ACTIVE' AND OLD.status = 'LOCKED' THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account unlocked');
         -- check if the account was reactivated
         ELSEIF NEW.status = 'ACTIVE' AND OLD.status = 'DELETED' THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account reactivated');
         END IF;
     END IF;
 
     -- log failed login attempts
     IF NEW.num_failed_login_attempts != OLD.num_failed_login_attempts THEN
-        INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'num_failed_login_attempts', OLD.num_failed_login_attempts, NEW.num_failed_login_attempts, 'failed login attempt');
     END IF;
 
     -- log successful logins
     IF NEW.last_login_at != OLD.last_login_at THEN
-        INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'last_login_at', OLD.last_login_at, NEW.last_login_at, 'successful login');
     END IF;
 
     -- log password changes
     IF NEW.password_hash != OLD.password_hash THEN
-        INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_hash', OLD.password_hash, NEW.password_hash, 'password changed');
     END IF;
 
     -- log changes to valid until date
     IF NEW.valid_until != OLD.valid_until THEN 
-        INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'valid_until', OLD.valid_until, NEW.valid_until, 'valid until date changed');
     END IF;
 
     -- log changes to password_expiry_date
     IF NEW.password_expiry_date != OLD.password_expiry_date THEN 
-        INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_expiry_date', OLD.password_expiry_date, NEW.password_expiry_date, 'password expiry date changed');
     END IF;
 END $$
@@ -510,13 +511,42 @@ BEGIN
 
     IF NEW.password_hash != OLD.password_hash THEN
         -- Get the password_expiry_period value from the configurations table and convert to INT
-        SELECT CAST(value AS UNSIGNED) INTO expiry_period
+        SELECT CAST(config_value AS UNSIGNED) INTO expiry_period
         FROM configurations
         WHERE config_key = 'password.expiry_period';
 
         -- Set the password_expiry_date to the current date plus the interval from the configurations table
         SET NEW.password_expiry_date = DATE_ADD(CURDATE(), INTERVAL expiry_period DAY);
     END IF;
+END $$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE TRIGGER update_password_history_on_password_change
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.password_hash != OLD.password_hash THEN
+        INSERT INTO password_history (user_id, password_hash) VALUES (NEW.id, NEW.password_hash);
+    END IF;
+END $$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE TRIGGER update_password_history_on_insert
+AFTER INSERT ON users
+FOR EACH ROW
+BEGIN
+	IF NEW.type != 'SYSTEM' THEN
+		INSERT INTO password_history (user_id, password_hash)
+		VALUES (NEW.id, NEW.password_hash);
+	END IF;
 END $$
 
 DELIMITER ;

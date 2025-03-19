@@ -67,6 +67,7 @@
     * `password_hash`: VARCHAR(255), NOT NULL
     * `password_expiry_date`: DATE, NOT NULL
     * `num_failed_login_attempts`: INT, DEFAULT 0
+    * `is_first_login`: BOOLEAN, DEFAULT TRUE
     * `last_login_at`: TIMESTAMP, DEFAULT NULL
     * `valid_until`: DATE, DEFAULT NULL
     * `created_by`: INT, NOT NULL, DEFAULT 1
@@ -83,6 +84,7 @@
         password_hash VARCHAR(255) NOT NULL,
         password_expiry_date DATE NOT NULL,
         num_failed_login_attempts INT DEFAULT 0,
+        is_first_login BOOLEAN DEFAULT TRUE,
         last_login_at TIMESTAMP DEFAULT NULL,
         valid_until DATE DEFAULT NULL,
         created_by INT NOT NULL DEFAULT 1,
@@ -740,11 +742,48 @@
         DECLARE expiry_period INT;
 
         IF NEW.password_hash != OLD.password_hash THEN
-            SELECT CAST(value AS UNSIGNED) INTO expiry_period
+            SELECT CAST(config_value AS UNSIGNED) INTO expiry_period
             FROM configurations
             WHERE config_key = 'password.expiry_period';
 
             SET NEW.password_expiry_date = DATE_ADD(CURDATE(), INTERVAL expiry_period DAY);
+        END IF;
+    END $$
+
+    DELIMITER ;
+    ```
+
+* **`update_password_history_on_password_change`**
+    * **Purpose:** Updates the password history for a user following a password change.
+    * **SQL Code:**
+    ```sql
+    DELIMITER $$
+
+    CREATE TRIGGER update_password_history_on_password_change
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    BEGIN
+        IF NEW.password_hash != OLD.password_hash THEN
+            INSERT INTO password_history (user_id, password_hash)
+            VALUES (NEW.id, NEW.password_hash);
+        END IF;
+    END $$
+
+    DELIMITER ;
+    ```
+* **`update_password_history_on_insert`**
+    * **Purpose:** Updates the password history after the initial user creation.
+    * **SQL Code:**
+    ```sql
+    DELIMITER $$
+
+    CREATE TRIGGER update_password_history_on_insert
+    AFTER INSERT ON users
+    FOR EACH ROW
+    BEGIN
+        IF NEW.type != 'SYSTEM' THEN
+            INSERT INTO password_history (user_id, password_hash)
+            VALUES (NEW.id, NEW.password_hash);
         END IF;
     END $$
 
@@ -824,6 +863,9 @@
         VALUES (username_param, password_hash_param, DATE_ADD(CURDATE(), INTERVAL 5 DAY), 1);
 
         SET user_id = LAST_INSERT_ID();
+
+        INSERT INTO password_history (user_id, password_hash)
+        VALUES (user_id, password_hash_param);
 
         INSERT INTO user_roles (user_id, role_id, created_by)
         VALUES (user_id, (SELECT id FROM roles WHERE name = 'Employee'), 2);

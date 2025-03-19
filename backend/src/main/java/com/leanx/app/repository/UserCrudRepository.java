@@ -25,7 +25,7 @@ public class UserCrudRepository implements CrudRepository<User> {
             throw new IllegalArgumentException("Invalid user object.");
         }
 
-        String sql = "INSERT INTO user (name, status, type, password_hash, password_expiry_date, " +
+        String sql = "INSERT INTO users (name, status, type, password_hash, password_expiry_date, " +
             "valid_until, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
@@ -57,11 +57,18 @@ public class UserCrudRepository implements CrudRepository<User> {
                     User user = new User();
                     user.setId(rs.getInt("id"));
                     user.setName(rs.getString("name"));
-                    user.setStatus(UserStatus.valueOf(rs.getString("status")));
-                    user.setType(UserType.valueOf(rs.getString("type")));
+
+                    try {
+                        user.setType(UserType.valueOf(rs.getString("type")));
+                        user.setStatus(UserStatus.valueOf(rs.getString("status")));
+                    } catch (IllegalArgumentException e) {
+                        logger.log(Level.WARNING, "IllegalArgumentException: " + e.getMessage(), e);
+                    }
+
                     user.setPasswordHash(rs.getString("password_hash"));
                     user.setPasswordExpiryDate(rs.getDate("password_expiry_date"));
                     user.setNumFailedLoginAttempts(rs.getInt("num_failed_login_attempts"));
+                    user.setIsFirstLogin(rs.getBoolean("is_first_login"));
                     user.setLastLoginAt(rs.getTimestamp("last_login_at"));
                     user.setValidUntil(rs.getDate("valid_until"));
                     user.setCreatedBy(rs.getInt("created_by"));
@@ -85,13 +92,13 @@ public class UserCrudRepository implements CrudRepository<User> {
             throw new IllegalArgumentException("Invalid input parameters");
         }
 
-        StringBuilder sql = new StringBuilder("UPDATE user SET ");
+        StringBuilder sql = new StringBuilder("UPDATE users SET ");
         for (String field : updates.keySet()) {
             sql.append(field).append(" = ?, ");
         }
 
         sql.setLength(sql.length() - 2);
-        sql.append(" WHERE user_id = ?");
+        sql.append(" WHERE id = ?");
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
             PreparedStatement SQLStatement = c.prepareStatement(sql.toString())) {
@@ -110,16 +117,15 @@ public class UserCrudRepository implements CrudRepository<User> {
 
     @Override
     public int delete(Integer id) throws IllegalArgumentException, SQLException {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "DELETE FROM users WHERE id = ?";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
             PreparedStatement SQLStatement = c.prepareStatement(sql)) {
 
             SQLStatement.setInt(1, id);
-
             return SQLStatement.executeUpdate();
         } catch (SQLException e) {
-            throw new SQLException("Error updating user with ID " + id, e);
+            throw new SQLException("Error deleting user with ID " + id, e);
         }
 
     }
@@ -156,15 +162,16 @@ public class UserCrudRepository implements CrudRepository<User> {
                     user.setName(rs.getString("name"));
 
                     try {
-                        user.setType(UserType.valueOf(rs.getString("status")));
-                        user.setStatus(UserStatus.valueOf(rs.getString("type")));
+                        user.setType(UserType.valueOf(rs.getString("type")));
+                        user.setStatus(UserStatus.valueOf(rs.getString("status")));
                     } catch (IllegalArgumentException e) {
-                        logger.log(Level.SEVERE, e.getMessage());
+                        logger.log(Level.WARNING, "IllegalArgumentException: " + e.getMessage(), e);
                     }
 
                     user.setPasswordHash(rs.getString("password_hash"));
                     user.setPasswordExpiryDate(rs.getDate("password_expiry_date"));
                     user.setNumFailedLoginAttempts(rs.getInt("num_failed_login_attempts"));
+                    user.setIsFirstLogin(rs.getBoolean("is_first_login"));
                     user.setLastLoginAt(rs.getTimestamp("last_login_at"));
                     user.setValidUntil(rs.getDate("valid_until"));
                     user.setCreatedBy(rs.getInt("created_by"));

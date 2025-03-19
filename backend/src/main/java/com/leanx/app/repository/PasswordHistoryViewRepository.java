@@ -28,7 +28,7 @@ public class PasswordHistoryViewRepository extends ViewRepository<PasswordHistor
 
     public static List<String> loadPasswordHistory(Integer userId, Integer historySize) throws SQLException {
         List<String> passwordHistory = new ArrayList<>();
-        String sql = "SELECT hashed_password FROM password_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?";
+        String sql = "SELECT password_hash FROM password_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?";
     
         try (Connection c = DatabaseUtils.getMySQLConnection();
             PreparedStatement stmt = c.prepareStatement(sql)) {
@@ -37,7 +37,7 @@ public class PasswordHistoryViewRepository extends ViewRepository<PasswordHistor
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    String passwordHash = rs.getString("hashed_password");
+                    String passwordHash = rs.getString("password_hash");
                     if (passwordHash != null) {
                         passwordHistory.add(passwordHash);
                     }
