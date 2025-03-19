@@ -6,17 +6,10 @@ services:
       - 80:8080
     env_file:
       - .env
-    # environment:
-    #   RDS_MYSQL_ENDPOINT: ${RDS_MYSQL_ENDPOINT}
-    #   RDS_MYSQL_PORT: ${RDS_MYSQL_PORT}
-    #   RDS_MYSQL_USER: ${RDS_MYSQL_USER}
-    #   RDS_MYSQL_PASSWORD: ${RDS_MYSQL_PASSWORD}
-    #   RDS_MYSQL_DB_NAME: ${RDS_MYSQL_DB_NAME}'
     networks:
       - leanx_network
     expose:
       - "8080"
-    
 
   # frontend:
   #   image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
