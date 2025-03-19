@@ -733,12 +733,12 @@ INSERT INTO permissions (id, name, description) VALUES
 /* ------------------ create system users for initial system setup and configurations  --------------------------- */
 
 -- system user used for initial system setup
-INSERT INTO users (id, name, status, type, password_hash, password_expiry_date, created_by) 
-VALUES (1, 'SYS_SETUP', 'LOCKED', 'SYSTEM', '', '1999-01-01', 1);
+INSERT INTO users (id, name, status, type, password_hash, num_failed_login_attempts, password_expiry_date, is_first_login, created_by) 
+VALUES (1, 'SYS_SETUP', 'LOCKED', 'SYSTEM', '', null, '1999-01-01', null, 1);
 
 -- system user used for running automated processes and background jobs following system setup
-INSERT INTO users (name, status, type, password_hash, password_expiry_date, created_by) 
-VALUES ('SYS_', 'LOCKED', 'SYSTEM', '', '1999-01-01', 1);
+INSERT INTO users (name, status, type, password_hash, num_failed_login_attempts, password_expiry_date, is_first_login,created_by) 
+VALUES ('SYS_', 'LOCKED', 'SYSTEM', '', null, '1999-01-01', null, 1);
 
 /* ------------------------------------ Assign Permissions to Roles -------------------------------------------- */
 -- System User

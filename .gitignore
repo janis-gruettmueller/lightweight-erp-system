@@ -8,7 +8,10 @@ secrets
 
 .env
 
+scripts/check-local-build.sh
 scripts/check-build.sh
+scripts/check-test.sh
+scripts/check-deploy.sh
 
 backend/src/main/java/com/leanx/app/service/EmailService.java
 backend/src/main/java/com/leanx/app/service/jobs/BackupDatabaseJob.java
