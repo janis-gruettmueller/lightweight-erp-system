@@ -14,7 +14,7 @@ set -e  # Exit if any command fails
 
 # Configuration Variables
 TEMP_SSH_KEY=AWS_EC2_ACCESS_KEY_TEMP.pem
-DOCKER_COMPOSE_FILE=./docker-compose.yml
+DOCKER_COMPOSE_FILE=docker-compose.yml
 ENV_FILE=.env
 
 # Step 1: Save GitHub Secret (SSH Key) to a File & Set Permissions
@@ -38,6 +38,8 @@ scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE 
 # Step 4: SSH into EC2 and deploy with docker-compose
 echo "Connecting to EC2 instance and deploying images with docker-compose..."
 ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF
+  cd /home/ubuntu
+  
   echo "Set correct permissions for .env file..."
   sudo chmod 644 .env
 
