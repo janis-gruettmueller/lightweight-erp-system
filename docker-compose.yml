@@ -2,6 +2,8 @@ services:
   backend:
     image: ${DOCKERHUB_USERNAME}/leanx-erp-system-backend:latest
     container_name: leanx-backend
+    ports: 
+      - 80:8080
     environment:
       RDS_MYSQL_ENDPOINT: ${RDS_MYSQL_ENDPOINT}
       RDS_MYSQL_PORT: ${RDS_MYSQL_PORT}

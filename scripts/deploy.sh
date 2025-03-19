@@ -13,9 +13,9 @@
 set -e  # Exit if any command fails
 
 # Configuration Variables
-TEMP_SSH_KEY="AWS_EC2_ACCESS_KEY_TEMP.pem"
-DOCKER_COMPOSE_FILE="docker-compose.yml"
-ENV_FILE=".env"
+TEMP_SSH_KEY=AWS_EC2_ACCESS_KEY_TEMP.pem
+DOCKER_COMPOSE_FILE=./docker-compose.yml
+ENV_FILE=.env
 
 # Step 1: Save GitHub Secret (SSH Key) to a File & Set Permissions
 cat "$AWS_EC2_ACCESS_KEY" > $TEMP_SSH_KEY
@@ -28,7 +28,7 @@ echo "RDS_MYSQL_PASSWORD=${RDS_MYSQL_PASSWORD}" >> $ENV_FILE
 echo "RDS_MYSQL_ENDPOINT=${RDS_MYSQL_ENDPOINT}" >> $ENV_FILE
 echo "RDS_MYSQL_PORT=${RDS_MYSQL_PORT}" >> $ENV_FILE
 echo "RDS_MYSQL_DB_NAME=${RDS_MYSQL_DB_NAME}" >> $ENV_FILE
-echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAM}" >> $ENV_FILE
+echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> $ENV_FILE
 echo "EC2_PUBLIC_IP=${EC2_ELASTIC_IP}" >> $ENV_FILE
 
 # Step 3: Copy .env and docker-compose.yml to EC2
@@ -37,17 +37,15 @@ scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE 
 
 # Step 4: SSH into EC2 and deploy with docker-compose
 echo "Connecting to EC2 instance and deploying images with docker-compose..."
-ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF
-  cd /home/ubuntu
-  
+ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF 
   echo "Pulling latest Docker images..."
-  docker-compose pull
+  sudo docker-compose pull
 
   echo "Stopping old containers..."
-  docker-compose down --remove-orphans  # Keeps named volumes intact
+  sudo docker-compose down --remove-orphans  # Keeps named volumes intact
 
   echo "Starting new containers..."
-  docker-compose up -d
+  sudo docker-compose up -d
 
   echo "Deployment completed!"
 EOF
