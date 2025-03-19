@@ -29,7 +29,7 @@ echo "RDS_MYSQL_ENDPOINT=${RDS_MYSQL_ENDPOINT}" >> $ENV_FILE
 echo "RDS_MYSQL_PORT=${RDS_MYSQL_PORT}" >> $ENV_FILE
 echo "RDS_MYSQL_DB_NAME=${RDS_MYSQL_DB_NAME}" >> $ENV_FILE
 echo "DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}" >> $ENV_FILE
-echo "EC2_PUBLIC_IP=${EC2_ELASTIC_IP}" >> $ENV_FILE
+echo "EC2_ELASTIC_IP=${EC2_ELASTIC_IP}" >> $ENV_FILE
 
 # Step 3: Copy .env and docker-compose.yml to EC2
 echo "Copying .env and docker-compose.yml to EC2 instance..."
