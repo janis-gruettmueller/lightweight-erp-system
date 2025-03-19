@@ -22,7 +22,7 @@ echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --passwor
 
 # Build backend Docker image
 echo "Building backend Docker image..."
-docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:${GITHUB_RUN_NUMBER}" \
+docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:v${GITHUB_RUN_NUMBER}.0" \
     -f backend/Dockerfile backend
 
 # Build frontend Docker image
@@ -33,7 +33,7 @@ docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKE
 # Push Docker images to Docker Hub
 echo "Pushing Docker images to Docker Hub..."
 docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest"
-docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:${GITHUB_RUN_NUMBER}"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:v${GITHUB_RUN_NUMBER}.0"
 # docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest"
 # docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:${GITHUB_RUN_NUMBER}"
 

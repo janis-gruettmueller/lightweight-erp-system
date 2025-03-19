@@ -12,7 +12,7 @@
 #!/bin/bash
 set -e # Exit on Error
 
-# Load variables from .env file if 
+# Load variables from .env file
 if [ -f .env ]; then
   source .env
 fi
