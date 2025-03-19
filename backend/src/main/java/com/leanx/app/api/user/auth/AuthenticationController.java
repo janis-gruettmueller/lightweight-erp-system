@@ -66,7 +66,7 @@ public class AuthenticationController extends HttpServlet {
             try {
                 session.setAttribute("userId", new UserService().getUserId(username));
             } catch (SQLException e1) {
-                ApiUtils.sendExceptionResponse(response, e1);
+                ApiUtils.sendExceptionResponse(response, null, e1);
                 return;
             }
             session.setMaxInactiveInterval(SecurityConfig.SESSION_TIMEOUT - 1800); // Session Timeout set to 30 min
@@ -98,10 +98,12 @@ public class AuthenticationController extends HttpServlet {
             }
 
             ApiUtils.sendSuccessResponse(response, "Password changed successfully!");
-        } catch (IllegalArgumentException | SQLException e) {
-            ApiUtils.sendExceptionResponse(response, e);
+        } catch (IllegalArgumentException e) {
+            ApiUtils.sendExceptionResponse(response, e.getMessage(), e);
+        } catch (SQLException e) {
+            ApiUtils.sendExceptionResponse(response, null, e);
         } catch (SecurityException e) {
-            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Failed to authenticate!");
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
     }
 }
