@@ -11,7 +11,7 @@ public class SecurityConfig {
 
     private static final Logger logger = Logger.getLogger(SecurityConfig.class.getName());
 
-    public static final int SESSION_TIMEOUT = 3600; // 1 hour in seconds
+    public static final int SESSION_TIMEOUT = 3600 * 24; // 24 hours in seconds
     public static Map<String, String> PASSWORD_SETTINGS; // current password settings -> needs to be updated if dynmically changed during runtime! (lazy loading)
 
     static {
