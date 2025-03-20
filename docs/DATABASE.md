@@ -65,8 +65,9 @@
     * `status`: ENUM('ACTIVE', 'LOCKED', 'DEACTIVATED'), NOT NULL, DEFAULT 'ACTIVE'
     * `type`: ENUM('NORMAL', 'ADMIN', 'SYSTEM'), NOT NULL, DEFAULT 'NORMAL'
     * `password_hash`: VARCHAR(255), NOT NULL
-    * `password_expiry_date`: DATE, NOT NULL
+    * `password_expiry_date`: DATE
     * `num_failed_login_attempts`: INT, DEFAULT 0
+    * `lock_until`: TIMESTAMP, DEFAULT NULL
     * `is_first_login`: BOOLEAN, DEFAULT TRUE
     * `last_login_at`: TIMESTAMP, DEFAULT NULL
     * `valid_until`: DATE, DEFAULT NULL
@@ -84,6 +85,7 @@
         password_hash VARCHAR(255) NOT NULL,
         password_expiry_date DATE NOT NULL,
         num_failed_login_attempts INT DEFAULT 0,
+        lock_until TIMESTAMP DEFAULT NULL,
         is_first_login BOOLEAN DEFAULT TRUE,
         last_login_at TIMESTAMP DEFAULT NULL,
         valid_until DATE DEFAULT NULL,
@@ -667,6 +669,11 @@
             INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_expiry_date', OLD.password_expiry_date, NEW.password_expiry_date, 'password expiry date changed');
         END IF;
+
+        IF NEW.lock_until != OLD.lock_until THEN 
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
+        END IF;
     END $$
 
     DELIMITER ;
@@ -771,6 +778,7 @@
 
     DELIMITER ;
     ```
+
 * **`update_password_history_on_insert`**
     * **Purpose:** Updates the password history after the initial user creation.
     * **SQL Code:**
@@ -784,6 +792,24 @@
         IF NEW.type != 'SYSTEM' THEN
             INSERT INTO password_history (user_id, password_hash)
             VALUES (NEW.id, NEW.password_hash);
+        END IF;
+    END $$
+
+    DELIMITER ;
+    ```
+
+ * **`set_lockout_period`**
+    * **Purpose:** automatically sets the lock out period to 30 minutes once the predifined number of failed login attempts before lockout is reached
+    * **SQL Code:**   
+    ```sql
+    DELIMITER $$
+
+    CREATE TRIGGER set_lockout_period
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    BEGIN
+        IF NEW.status = 'LOCKED' THEN
+            SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE);
         END IF;
     END $$
 

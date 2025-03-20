@@ -50,8 +50,9 @@ CREATE TABLE users (
     */
     type ENUM('NORMAL', 'ADMIN', 'SYSTEM') NOT NULL DEFAULT 'NORMAL',
     password_hash VARCHAR(255) NOT NULL,
-    password_expiry_date DATE NOT NULL,
+    password_expiry_date DATE,
     num_failed_login_attempts INT DEFAULT 0,
+    lock_until TIMESTAMP DEFAULT NULL,
     is_first_login BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP DEFAULT NULL,
     valid_until DATE DEFAULT NULL,
@@ -130,14 +131,7 @@ CREATE TABLE user_history_log (
     user_id INT NOT NULL,
     changed_by INT NOT NULL,
     changed_at TIMESTAMP NOT NULL,
-    field_name ENUM(
-        'user_status', 
-        'is_verified', 
-        'password_hash', 
-        'num_failed_login_attempts', 
-        'last_login_at', 
-        'valid_until'
-    ) DEFAULT NULL,
+    field_name VARCHAR(255) DEFAULT NULL,
     old_value TEXT DEFAULT NULL,
     new_value TEXT NOT NULL,
     description TEXT DEFAULT NULL,
@@ -447,6 +441,12 @@ BEGIN
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_expiry_date', OLD.password_expiry_date, NEW.password_expiry_date, 'password expiry date changed');
     END IF;
+    
+    -- log changes to lock_until
+    IF NEW.lock_until != OLD.lock_until THEN 
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
+    END IF;
 END $$
 
 DELIMITER ;
@@ -547,6 +547,20 @@ BEGIN
 		INSERT INTO password_history (user_id, password_hash)
 		VALUES (NEW.id, NEW.password_hash);
 	END IF;
+END $$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE TRIGGER set_lockout_period
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'LOCKED' THEN
+		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE);
+    END IF;
 END $$
 
 DELIMITER ;
@@ -790,8 +804,8 @@ VALUES
 /* ---------------------------------- Create Default User for manual System Setup ----------------------------------------- */
 
 -- password: "initERP@2025" hashed with BCrypt (it is highly recommended to lock the user following the initial setup!)
-INSERT INTO users (name, status, type, password_hash, password_expiry_date, created_by) 
-VALUES ('DEFAULT_USR', 'ACTIVE', 'ADMIN', '$2a$10$Z6v/1IM1G2x6e47i1HnhvuWAmNgTETU7RiYzc4kRxu7LdNy1.PARu', DATE_ADD(CURDATE(), INTERVAL 90 DAY), 1);
+INSERT INTO users (name, status, type, password_hash, is_first_login, password_expiry_date, created_by) 
+VALUES ('DEFAULT_USR', 'ACTIVE', 'ADMIN', '$2a$10$Z6v/1IM1G2x6e47i1HnhvuWAmNgTETU7RiYzc4kRxu7LdNy1.PARu', false, null, 1);
 
 -- give SYS_ user the SYSTEM_USER role
 INSERT INTO user_roles (user_id, role_id, created_by) 
