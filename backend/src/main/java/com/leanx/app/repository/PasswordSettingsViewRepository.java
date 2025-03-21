@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.leanx.app.model.views.PasswordSettingsView;
+import com.leanx.app.repository.base.ViewRepository;
 
 public class PasswordSettingsViewRepository extends ViewRepository<PasswordSettingsView> {
 

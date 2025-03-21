@@ -30,8 +30,7 @@ public class UserEmployeeLinkRepository {
         try (Connection c = DatabaseUtils.getMySQLConnection();
              PreparedStatement stmt = c.prepareStatement(sql)) {
 
-            stmt.setInt(1, employeeId);
-            
+            stmt.setInt(1, employeeId);    
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     userIds.add(rs.getInt("user_id"));
@@ -40,6 +39,23 @@ public class UserEmployeeLinkRepository {
         }
 
         return userIds;
+    }
+
+    public Integer findEmployeeForUser(Integer userId) throws SQLException{
+        String sql = "SELECT employee_id FROM employee_user_link WHERE user_id = ?";
+        
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+             PreparedStatement stmt = c.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("employee_id");
+                }
+            }
+        }
+
+        return -1;
     }
     
 }

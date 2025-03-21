@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.leanx.app.model.views.PasswordHistoryView;
+import com.leanx.app.repository.base.ViewRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
 public class PasswordHistoryViewRepository extends ViewRepository<PasswordHistoryView>{
