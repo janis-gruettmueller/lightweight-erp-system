@@ -19,7 +19,7 @@ public class Employee implements Serializable {
     private Date hireDate;
     private Date startDate;
     private Date terminationDate;
-    private TerminationReason terminationReason;
+    private String terminationReason;
     private Date retentionEndDate;
     private Timestamp createdAt;
     private Integer createdBy;
@@ -32,10 +32,6 @@ public class Employee implements Serializable {
 
     public enum EmploymentStatus {
         ACTIVE, TERMINATED, RESIGNED, RETIRED, ON_LEAVE, SUSPENDED
-    }
-
-    public enum TerminationReason {
-        RESIGNATION, DISMISSAL, END_OF_CONTRACT, RETIREMENT
     }
 
     // Default constructor
@@ -68,7 +64,7 @@ public class Employee implements Serializable {
     public Date getHireDate() { return hireDate; }
     public Date getStartDate() { return startDate; }
     public Date getTerminationDate() { return terminationDate; }
-    public TerminationReason getTerminationReason() { return terminationReason; }
+    public String getTerminationReason() { return terminationReason; }
     public Date getRetentionEndDate() { return retentionEndDate; }
     public Timestamp getCreatedAt() { return createdAt; }
     public Integer getCreatedBy() { return createdBy; }
@@ -87,7 +83,7 @@ public class Employee implements Serializable {
     public void setHireDate(Date hireDate) { this.hireDate = hireDate; }
     public void setStartDate(Date startDate) { this.startDate = startDate; }
     public void setTerminationDate(Date terminationDate) { this.terminationDate = terminationDate; }
-    public void setTerminationReason(TerminationReason terminationReason) { this.terminationReason = terminationReason; }
+    public void setTerminationReason(String terminationReason) { this.terminationReason = terminationReason; }
     public void setRetentionEndDate(Date retentionEndDate) { this.retentionEndDate = retentionEndDate; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public void setCreatedBy(Integer createdBy) { this.createdBy = createdBy; }

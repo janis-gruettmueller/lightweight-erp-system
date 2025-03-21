@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import com.leanx.app.model.User;
 import com.leanx.app.model.User.UserStatus;
 import com.leanx.app.model.User.UserType;
+import com.leanx.app.repository.base.CrudRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
 public class UserCrudRepository implements CrudRepository<User> {
@@ -68,6 +69,7 @@ public class UserCrudRepository implements CrudRepository<User> {
                     user.setPasswordHash(rs.getString("password_hash"));
                     user.setPasswordExpiryDate(rs.getDate("password_expiry_date"));
                     user.setNumFailedLoginAttempts(rs.getInt("num_failed_login_attempts"));
+                    user.setLockUntil(rs.getTimestamp("lock_until"));
                     user.setIsFirstLogin(rs.getBoolean("is_first_login"));
                     user.setLastLoginAt(rs.getTimestamp("last_login_at"));
                     user.setValidUntil(rs.getDate("valid_until"));
@@ -171,6 +173,7 @@ public class UserCrudRepository implements CrudRepository<User> {
                     user.setPasswordHash(rs.getString("password_hash"));
                     user.setPasswordExpiryDate(rs.getDate("password_expiry_date"));
                     user.setNumFailedLoginAttempts(rs.getInt("num_failed_login_attempts"));
+                    user.setLockUntil(rs.getTimestamp("lock_until"));
                     user.setIsFirstLogin(rs.getBoolean("is_first_login"));
                     user.setLastLoginAt(rs.getTimestamp("last_login_at"));
                     user.setValidUntil(rs.getDate("valid_until"));

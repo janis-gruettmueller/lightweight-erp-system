@@ -48,10 +48,11 @@ CREATE TABLE users (
         - LOCKED: User is temporarily blocked (e.g., failed logins, security issues).
         - DEACTIVATED: Soft delete -> User cannot log in, and role mappings are removed.
     */
-    type ENUM('NORMAL', 'ADMIN', 'SYSTEM') NOT NULL DEFAULT 'NORMAL',
+    type ENUM('NORMAL', 'ADMIN', 'SYSTEM', 'SUPER') NOT NULL DEFAULT 'NORMAL',
     password_hash VARCHAR(255) NOT NULL,
-    password_expiry_date DATE NOT NULL,
+    password_expiry_date DATE,
     num_failed_login_attempts INT DEFAULT 0,
+    lock_until TIMESTAMP DEFAULT NULL,
     is_first_login BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP DEFAULT NULL,
     valid_until DATE DEFAULT NULL,
@@ -130,14 +131,7 @@ CREATE TABLE user_history_log (
     user_id INT NOT NULL,
     changed_by INT NOT NULL,
     changed_at TIMESTAMP NOT NULL,
-    field_name ENUM(
-        'user_status', 
-        'is_verified', 
-        'password_hash', 
-        'num_failed_login_attempts', 
-        'last_login_at', 
-        'valid_until'
-    ) DEFAULT NULL,
+    field_name VARCHAR(255) DEFAULT NULL,
     old_value TEXT DEFAULT NULL,
     new_value TEXT NOT NULL,
     description TEXT DEFAULT NULL,
@@ -172,7 +166,7 @@ CREATE TABLE employees (
     hire_date DATE NOT NULL,
     start_date DATE DEFAULT NULL,
     termination_date DATE DEFAULT NULL,
-    termination_reason ENUM('Resignation', 'Dismissal', 'End of Contract', 'Retirement'),
+    termination_reason VARCHAR(100), -- possible reasons could be 'Resignation', 'Dismissal', 'End of Contract' or 'Retirement'
     retention_end_date DATE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by INT NOT NULL,
@@ -331,7 +325,7 @@ SELECT
 FROM users u
 LEFT JOIN user_employee_link uel ON u.id = uel.user_id
 LEFT JOIN employees e ON uel.employee_id = e.id
-WHERE u.type = 'ADMIN'
+WHERE u.type = 'ADMIN' OR u.type = 'SUPER'
 ORDER BY u.created_at;
 
 
@@ -447,6 +441,12 @@ BEGIN
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_expiry_date', OLD.password_expiry_date, NEW.password_expiry_date, 'password expiry date changed');
     END IF;
+    
+    -- log changes to lock_until
+    IF NEW.lock_until != OLD.lock_until THEN 
+        INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
+    END IF;
 END $$
 
 DELIMITER ;
@@ -547,6 +547,20 @@ BEGIN
 		INSERT INTO password_history (user_id, password_hash)
 		VALUES (NEW.id, NEW.password_hash);
 	END IF;
+END $$
+
+DELIMITER ;
+
+
+DELIMITER $$
+
+CREATE TRIGGER set_lockout_period
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+    IF NEW.status = 'LOCKED' THEN
+		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE);
+    END IF;
 END $$
 
 DELIMITER ;
@@ -702,32 +716,47 @@ DELIMITER ;
 START TRANSACTION;
 -- Create Roles
 INSERT INTO roles (id, name, description) VALUES
-    (1, 'System User', 'Used for automated processes and background jobs'),
-    (2, 'Admin', 'Full access to system configurations s and user management'),
-    (3, 'FI Ops', 'Manages financial transactions, reports, and analysis'),
+    (1, 'Super User', 'Full access to the system and core functionality'),
+    (2, 'System User', 'Used for automated processes and background jobs'),
+    (3, 'Admin', 'Full access to system configurations and user management'),
     (4, 'HR Ops', 'Manages employee records, payroll, and benefits'),
-    (5, 'Employee', 'Access to personal data, payroll records, and requests of absence')
+    (5, 'Finance Ops', 'Manages financial transactions, reports, and analysis'),
+    (6, 'Sales Ops', 'Manages sales leads, opportunities, and reports'),
+    (7, 'Employee', 'Access to personal data, payroll records, and requests of absence'),
+    (8, 'Manager', 'Manages team members, approves requests, and has access to view team reports'),
+    (9, 'Demo', 'Demonstration role with read-only access to all data')
 ;
 
 -- Create Permissions
 INSERT INTO permissions (id, name, description) VALUES
     (1, 'View Financial Data', 'Ability to view financial transactions and reports'),
     (2, 'Modify Financial Data', 'Ability to create and edit financial transactions'),
-    (3, 'Approve Financial Data', 'Ability to approve or finalize financial data'),
-    (4, 'View Payroll Data', 'Ability to view payroll and salary information'),
-    (5, 'Modify Payroll Data', 'Ability to create and edit payroll and salary information'),
-    (6, 'Approve Payroll Data', 'Ability to approve payroll and salary changes'),
-    (7, 'View Employee Data', 'Ability to view employee personal information'),
-    (8, 'Modify Employee Data', 'Ability to edit employee personal information'),
-    (9, 'View Personal Data', 'Ability to view personal employee information and payroll data'),
-    (10, 'Request for Change of Personal Data', 'Ability to submit a request to change personal information'),
-    (11, 'Request of Absence', 'Ability to submit and view personal requests of absence'),
-    (12, 'Create User', 'Ability to create new user accounts'),
-    (13, 'Deactivate User', 'Ability to deactivate existing user accounts'),
-    (14, 'Modify User Access', 'Ability to modify access rights of existing user accounts'),
-    (15, 'Modify System Settings', 'Ability to modify system settings and configurations s'),
-    (16, 'Run Background Jobs', 'Ability to start and run automated background jobs'),
-    (17, 'Run Automated Processes', 'Ability to start and run automated system processes')
+
+    (3, 'View Payroll Data', 'Ability to view payroll and salary information'),
+    (4, 'Modify Payroll Data', 'Ability to create and edit payroll and salary information'),
+
+    (5, 'View Employee Data', 'Ability to view employee personal information'),
+    (6, 'Modify Employee Data', 'Ability to edit employee personal information'),
+
+    (7, 'View Team Information', 'Ability to view employee information about team members'),
+    (8, 'View Team Requests', 'Ability to view employee requests by team members'),
+    (9, 'Approve Team Requests', 'Ability to approve employee requests by team members (e.g. Request of Absence)'),
+
+    (10, 'View Personal Data', 'Ability to view personal employee information and payroll data'),
+    (11, 'Request for Change of Personal Data', 'Ability to submit a request to change personal information'),
+    (12, 'Request of Absence', 'Ability to submit and view personal requests of absence'),
+
+    (13, 'Create User', 'Ability to create new user accounts'),
+    (14, 'Deactivate User', 'Ability to deactivate existing user accounts'),
+    (15, 'Modify User Access', 'Ability to modify access rights of existing user accounts'),
+
+    (16, 'View System Settings', 'Ability to view system settings and configurations'),
+    (17, 'Modify System Settings', 'Ability to modify system settings and configurations'),
+    (18, 'Run Background Jobs', 'Ability to start and run automated background jobs'),
+    (19, 'Run Automated Processes', 'Ability to start and run automated system processes'),
+
+    (20, 'View Sales Data', 'Ability to view payroll and salary information'),
+    (21, 'Modify Sales Data', 'Ability to create and edit payroll and salary information')
 ;
 
 /* ------------------ create system users for initial system setup and configurations  --------------------------- */
@@ -741,43 +770,59 @@ INSERT INTO users (name, status, type, password_hash, num_failed_login_attempts,
 VALUES ('SYS_', 'LOCKED', 'SYSTEM', '', null, '1999-01-01', null, 1);
 
 /* ------------------------------------ Assign Permissions to Roles -------------------------------------------- */
--- System User
+-- Super User (All Permissions)
 INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
-    (1, 16, 1), (1, 17, 1) -- run automated processes and background jobs
-;
+    (1, 1, 1), (1, 2, 1),  -- View and Modify Financial Data
+    (1, 3, 1), (1, 4, 1),  -- View and Modify Payroll Data
+    (1, 5, 1), (1, 6, 1),  -- View and Modify Employee Data
+    (1, 7, 1), (1, 8, 1), (1, 9, 1), -- View Team Info/Requests and Approve Requests
+    (1, 10, 1), (1, 11, 1), (1, 12, 1), -- View Personal Data, Request Change, Request Absence
+    (1, 13, 1), (1, 14, 1), (1, 15, 1), -- Create, Deactivate, Modify Users
+    (1, 16, 1), (1, 17, 1), -- View and Modify System Settings
+    (1, 18, 1), (1, 19, 1), -- Run Background Jobs and Processes
+    (1, 20, 1), (1, 21, 1); -- View and Modify Sales Data
 
--- Admin (Full Access)
+-- System User (Background Jobs and Processes)
 INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
-    (2, 12, 1), (2, 13, 1), (2, 14, 1),   -- User Access Management (Create, Deactivate, Modify Access)
-    (2, 15, 1), (2, 16, 1)                -- Configure System Settings and start automated jobs
-;
+    (2, 18, 1), (2, 19, 1); -- Run Background Jobs and Processes
 
--- FI Ops (Finance Operations)
+-- Admin (User Management and System Settings)
 INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
-    (3, 1, 1),  -- View Financial Data
-    (3, 2, 1),  -- Modify Financial Data
-    (3, 3, 1),  -- Approve Financial Data
-    (3, 4, 1)   -- View Payroll Data
-;
+    (3, 13, 1), (3, 14, 1), (3, 15, 1), -- Create, Deactivate, Modify Users
+    (3, 16, 1), (3, 17, 1); -- View and Modify System Settings
 
--- HR Ops (HR Operations)
+-- HR Ops (Payroll and Employee Data)
 INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
-    (4, 4, 1), (4, 5, 1), (4, 6, 1),  -- Payroll Data (View, Modify, Approve)
-    (4, 7, 1), (4, 8, 1)              -- Employee Data (View, Modify, Update)
-;
+    (4, 3, 1), (4, 4, 1),  -- View and Modify Payroll Data
+    (4, 5, 1), (4, 6, 1),  -- View and Modify Employee Data
+    (4, 7, 1), (4, 8, 1);  -- View Team Information and Requests
 
--- Employee (Personal Access)
-INSERT INTO role_permissions (role_id, permission_id,  created_by) VALUES
-    (5, 9, 1),  -- View Payroll Data
-    (5, 10, 1),  -- View Personal Employee & Payroll Data
-    (5, 11, 1)   -- Submit or view Request of absence
-;
+-- Finance Ops (Financial Data)
+INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
+    (5, 1, 1), (5, 2, 1),  -- View and Modify Financial Data
+    (5, 3, 1), (5, 4, 1);  -- View and Modify Payroll Data
+
+-- Sales Ops (Sales Data)
+INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
+    (6, 20, 1), (6, 21, 1); -- View and Modify Sales Data
+
+-- Employee (Personal Data)
+INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
+    (7, 10, 1), (7, 11, 1), (7, 12, 1); -- View Personal Data, Request Change, Request Absence
+
+-- Manager (Team Data and Requests)
+INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
+    (8, 7, 1), (8, 8, 1), (8, 9, 1); -- View Team Information/Requests and Approve Requests
+
+-- Demo User (Read-only Access)
+INSERT INTO role_permissions (role_id, permission_id, created_by) VALUES
+    (9, 1, 1), (9, 3, 1), (9, 5, 1), (9, 7, 1), (9, 8, 1), (9, 10, 1), (9, 12, 1), (9, 16, 1), (9, 20, 1); -- all view data related permissions.
 
 -- Set Initial Password configurations 
 INSERT INTO configurations (config_key, config_value, config_category, description, last_updated_by)
 VALUES
-    ('password.min_length', '8', 'PASSWORD_SETTINGS', 'Minimum password length', 1),
-    ('password.max_length', '20', 'PASSWORD_SETTINGS', 'Maximum password length', 1),
+    ('password.min_length', '12', 'PASSWORD_SETTINGS', 'Minimum password length', 1),
+    ('password.max_length', '256', 'PASSWORD_SETTINGS', 'Maximum password length', 1),
     ('password.require_uppercase', 'true', 'PASSWORD_SETTINGS', 'Require uppercase letters', 1),
     ('password.require_lowercase', 'true', 'PASSWORD_SETTINGS', 'Require lowercase letters', 1),
     ('password.require_numbers', 'true', 'PASSWORD_SETTINGS', 'Require numeric characters', 1),
@@ -789,16 +834,16 @@ VALUES
 
 /* ---------------------------------- Create Default User for manual System Setup ----------------------------------------- */
 
--- password: "initERP@2025" hashed with BCrypt (it is highly recommended to lock the user following the initial setup!)
-INSERT INTO users (name, status, type, password_hash, password_expiry_date, created_by) 
-VALUES ('DEFAULT_USR', 'ACTIVE', 'ADMIN', '$2a$10$Z6v/1IM1G2x6e47i1HnhvuWAmNgTETU7RiYzc4kRxu7LdNy1.PARu', DATE_ADD(CURDATE(), INTERVAL 90 DAY), 1);
+-- password: "initERP@2025" hashed with BCrypt (it is strongly recommended to lock the user following the initial setup!)
+INSERT INTO users (name, status, type, password_hash, is_first_login, password_expiry_date, created_by) 
+VALUES ('DEFAULT_USR', 'ACTIVE', 'SUPER', '$2a$10$Z6v/1IM1G2x6e47i1HnhvuWAmNgTETU7RiYzc4kRxu7LdNy1.PARu', false, null, 1);
 
 -- give SYS_ user the SYSTEM_USER role
 INSERT INTO user_roles (user_id, role_id, created_by) 
-VALUES (2, 1, 1);
+VALUES (2, 2, 1);
 
--- give default user admin rights
+-- give default user super user rights
 INSERT INTO user_roles (user_id, role_id, created_by) 
-VALUES (3, 2, 1);
+VALUES (3, 1, 1);
 
 COMMIT;

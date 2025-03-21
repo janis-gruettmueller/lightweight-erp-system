@@ -69,7 +69,7 @@ public class AuthenticationController extends HttpServlet {
                 ApiUtils.sendExceptionResponse(response, null, e1);
                 return;
             }
-            session.setMaxInactiveInterval(SecurityConfig.SESSION_TIMEOUT - 1800); // Session Timeout set to 30 min
+            session.setMaxInactiveInterval(3600); // Session Timeout set to 1 hour
             ApiUtils.sendRedirectResponse(response, e.getMessage(), "/change-password");
         } catch (AccountLockedException e) {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
