@@ -13,12 +13,17 @@ public class PasswordHistoryView implements Serializable {
     private final String passwordHash;
     private final Timestamp createdAt;
 
+    /**
+     * Constructs an instance of {@code PasswordHistoryView}.
+     * This constructor initializes the Password History View Data Object.
+     */
     public PasswordHistoryView(ResultSet rs) throws SQLException {
         this.userId = rs.getInt("user_id");
         this.passwordHash = rs.getString("password_hash");
         this.createdAt= rs.getTimestamp("created_at");
     }
 
+    // getters
     public Integer getUserId() { return this.userId; }
     public String getPasswordHash() { return this.passwordHash; }
     public Timestamp getCreatedAt() { return this.createdAt; }

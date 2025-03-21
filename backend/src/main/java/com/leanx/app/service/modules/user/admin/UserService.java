@@ -76,9 +76,9 @@ public final class UserService {
         return executeUpdate(updates, userId);
     }
 
-    public boolean incrementNumFailedLoginAttempts(Integer userId, Integer updatedBy, Integer numFailedAttempts) {
+    public boolean updateNumFailedLoginAttempts(Integer userId, Integer updatedBy, Integer numFailedAttempts) {
         Map<String, Object> updates = new HashMap<>();
-        updates.put("num_failed_login_attempts", numFailedAttempts + 1);
+        updates.put("num_failed_login_attempts", numFailedAttempts);
         updates.put("last_updated_by", updatedBy);
         return executeUpdate(updates, userId);
     }
@@ -93,6 +93,14 @@ public final class UserService {
     public boolean lockUser(Integer userId, Integer updatedBy) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("status", "LOCKED");
+        updates.put("last_updated_by", updatedBy);
+        return executeUpdate(updates, userId);
+    }
+
+    public boolean unlockUser(Integer userId, Integer updatedBy) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", "ACTIVE");
+        updates.put("lock_until", null);
         updates.put("last_updated_by", updatedBy);
         return executeUpdate(updates, userId);
     }

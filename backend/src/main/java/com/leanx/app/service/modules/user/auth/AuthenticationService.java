@@ -10,8 +10,9 @@ import java.util.logging.Logger;
 import org.mindrot.jbcrypt.BCrypt;
 
 import com.leanx.app.model.User;
+import com.leanx.app.model.User.UserStatus;
 import com.leanx.app.repository.PasswordHistoryViewRepository;
-import com.leanx.app.repository.ViewRepository;
+import com.leanx.app.repository.base.ViewRepository;
 import com.leanx.app.service.modules.system.configs.SecurityConfig;
 import com.leanx.app.service.modules.user.admin.UserService;
 import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;
@@ -85,26 +86,40 @@ public class AuthenticationService {
             return -1;
         }
 
-        if (user.getStatus() == User.UserStatus.LOCKED) {
-            logger.log(Level.WARNING, "User is locked: {0}", username);
-            throw new AccountLockedException("Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.");
+        if (user.getStatus() == UserStatus.LOCKED) {
+            if (user.getLockUntil() == null) {
+                logger.log(Level.WARNING, "Locked user attempted to login: {0}", username);
+                return -1;
+            }
+
+            if(user.getLockUntil() != null && System.currentTimeMillis() < user.getLockUntil().getTime() + 30 * 60 * 1000) {
+                logger.log(Level.WARNING, "Failed login attempt due to user being temporarily locked: {0}", username);
+                userService.updateNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts() + 1);
+                throw new AccountLockedException("Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.");
+            }
+
+            userService.unlockUser(user.getId(), 2);
+            user.setStatus(UserStatus.ACTIVE);
+            user.setNumFailedLoginAttempts(0);
         }
 
-        if (user.getNumFailedLoginAttempts() >= Integer.valueOf(passwordSettings.get("password.num_failed_attempts_before_lockout"))) {
-            logger.log(Level.WARNING, "Too many failed login attempts: {0}", username);
-            userService.lockUser(user.getId(), 2);
+        if (!this.checkPassword(password, user.getPasswordHash())) {
+            int maxFailedAttempts = Integer.parseInt(passwordSettings.get("password.num_failed_attempts_before_lockout"));
+            
+            userService.updateNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts() + 1);
+            if (user.getNumFailedLoginAttempts() + 1 >= maxFailedAttempts) {
+                logger.log(Level.WARNING, "User locked due to exceeding allowed number of failed login attempts: {0}", username);
+                userService.lockUser(user.getId(), 2);
+                return -1;
+            }
+
+            logger.log(Level.WARNING, "Incorrect password attempt for user: {0}", username);
             return -1;
         }
 
         if (user.getPasswordExpiryDate() != null && user.getPasswordExpiryDate().before(new Date(System.currentTimeMillis()))) {
             logger.log(Level.WARNING, "Password expired for user: {0}", username);
             throw new PasswordExpiredException("Password has expired. Please reset your password.");
-        }
-
-        if (!this.checkPassword(password, user.getPasswordHash())) {
-            userService.incrementNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts());
-            logger.log(Level.WARNING, "Incorrect password attempt for username: {0}", username);
-            return -1;
         }
 
         userService.resetNumFailedLoginAttempts(user.getId(), 2);
