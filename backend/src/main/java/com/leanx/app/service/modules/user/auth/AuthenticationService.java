@@ -12,7 +12,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import com.leanx.app.model.User;
 import com.leanx.app.model.User.UserStatus;
 import com.leanx.app.repository.PasswordHistoryViewRepository;
-import com.leanx.app.repository.ViewRepository;
+import com.leanx.app.repository.base.ViewRepository;
 import com.leanx.app.service.modules.system.configs.SecurityConfig;
 import com.leanx.app.service.modules.user.admin.UserService;
 import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;

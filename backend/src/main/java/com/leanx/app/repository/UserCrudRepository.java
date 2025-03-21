@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import com.leanx.app.model.User;
 import com.leanx.app.model.User.UserStatus;
 import com.leanx.app.model.User.UserType;
+import com.leanx.app.repository.base.CrudRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
 public class UserCrudRepository implements CrudRepository<User> {

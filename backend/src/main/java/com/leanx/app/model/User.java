@@ -29,7 +29,7 @@ public class User implements Serializable {
     }
 
     public enum UserType {
-        NORMAL, ADMIN, SYSTEM
+        NORMAL, ADMIN, SYSTEM, SUPER
     }
 
     // Default constructor
