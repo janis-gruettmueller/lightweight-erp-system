@@ -1,4 +1,4 @@
-package com.leanx.app.model;
+package com.leanx.app.model.entity;
 
 import java.io.Serializable;
 import java.sql.Date;
@@ -6,7 +6,7 @@ import java.sql.Timestamp;
 
 public class User implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 20L;
 
     private Integer id;
     private String name;

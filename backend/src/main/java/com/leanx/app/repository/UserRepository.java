@@ -10,15 +10,15 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.leanx.app.model.User;
-import com.leanx.app.model.User.UserStatus;
-import com.leanx.app.model.User.UserType;
+import com.leanx.app.model.entity.User;
+import com.leanx.app.model.entity.User.UserStatus;
+import com.leanx.app.model.entity.User.UserType;
 import com.leanx.app.repository.base.CrudRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
-public class UserCrudRepository implements CrudRepository<User> {
+public class UserRepository implements CrudRepository<User> {
 
-    private static final Logger logger = Logger.getLogger(UserCrudRepository.class.getName());
+    private static final Logger logger = Logger.getLogger(UserRepository.class.getName());
 
     @Override
     public int create(User user) throws IllegalArgumentException, SQLException {

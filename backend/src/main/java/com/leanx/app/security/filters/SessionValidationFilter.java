@@ -34,18 +34,12 @@ public class SessionValidationFilter implements Filter {
 
         // Get the session if it exists
         HttpSession session = httpRequest.getSession(false); // Don't create a new session if none exists
-        if (session == null) {
+        if (session == null || session.getAttribute("userId") == null) {
             httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             httpResponse.getWriter().write("{\"error\": \"Session Expired! Please log in again.\"}");
             return;
         }
-
-        if (session.getAttribute("userId") == null) {
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            httpResponse.getWriter().write("{\"error\": \"Unauthorized Session! Please log in.\"}");
-            return;
-        }
-
+        
         // Continue the request chain
         chain.doFilter(request, response);
     }
