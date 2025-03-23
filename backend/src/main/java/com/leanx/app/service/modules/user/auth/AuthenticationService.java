@@ -3,21 +3,18 @@ package com.leanx.app.service.modules.user.auth;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.mindrot.jbcrypt.BCrypt;
-
-import com.leanx.app.model.User;
-import com.leanx.app.model.User.UserStatus;
+import com.leanx.app.model.entity.User;
+import com.leanx.app.model.entity.User.UserStatus;
 import com.leanx.app.repository.PasswordHistoryViewRepository;
 import com.leanx.app.repository.base.ViewRepository;
-import com.leanx.app.service.modules.system.configs.SecurityConfig;
 import com.leanx.app.service.modules.user.admin.UserService;
 import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;
 import com.leanx.app.service.modules.user.auth.exceptions.FirstLoginException;
 import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredException;
+import com.leanx.app.utils.PasswordUtils;
 
 /**
  * The {@code AuthenticationService} class provides functionalities related to user authentication,
@@ -27,9 +24,9 @@ import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredExcepti
 public class AuthenticationService {
 
     private static final Logger logger = Logger.getLogger(ViewRepository.class.getName());
-
-    private final Map<String, String> passwordSettings = SecurityConfig.PASSWORD_SETTINGS;
+    
     private final UserService userService;
+    private final PasswordUtils passwordUtils;
 
     /**
      * Constructs an instance of {@code AuthenticationService}.
@@ -37,28 +34,9 @@ public class AuthenticationService {
      */
     public AuthenticationService() {
         this.userService = new UserService();
+        this.passwordUtils = new PasswordUtils();
     }
 
-    /**
-     * Hashes the plain text password using BCrypt.
-     *
-     * @param plainTextPassword The plain text password.
-     * @return The hashed password.
-     */
-    private String hashPassword(String plainTextPassword) {
-        return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
-    }
-
-    /**
-     * Checks if the provided plain text password matches the hashed password.
-     *
-     * @param plainTextPassword The plain text password.
-     * @param hashedPassword    The password hash of the user object.
-     * @return {@code true} if passwords match, {@code false} otherwise.
-     */
-    private boolean checkPassword(String plainTextPassword, String hashedPassword) {
-        return BCrypt.checkpw(plainTextPassword, hashedPassword);
-    }
 
     /**
      * Authenticates the user by checking their username and password.
@@ -73,111 +51,63 @@ public class AuthenticationService {
      * @throws FirstLoginException      If the user needs to change their password before first login.
      */
     public int authenticate(String username, String password) throws AccountLockedException, PasswordExpiredException, FirstLoginException {
-        User user;
         try {
-            user = userService.getUserByIdentifier(username);
-        } catch (IllegalArgumentException | SQLException e) {
-            logger.log(Level.SEVERE, "Error retrieving user with username: {0}" + username, e);
-            return -1;
-        }
+            User user = userService.getUserByIdentifier(username);
 
-        if (user == null) {
-            logger.log(Level.WARNING, "No user found for username: {0}", username);
-            return -1;
-        }
-
-        if (user.getStatus() == UserStatus.LOCKED) {
-            if (user.getLockUntil() == null) {
-                logger.log(Level.WARNING, "Locked user attempted to login: {0}", username);
+            if (user == null) {
+                logger.log(Level.WARNING, "Failed to find user with username: {0}", username);
                 return -1;
             }
 
-            if(user.getLockUntil() != null && System.currentTimeMillis() < user.getLockUntil().getTime() + 30 * 60 * 1000) {
-                logger.log(Level.WARNING, "Failed login attempt due to user being temporarily locked: {0}", username);
+            if (user.getStatus() == UserStatus.LOCKED) {
+                if (user.getLockUntil() == null) {
+                    logger.log(Level.WARNING, "Locked user attempted to login: {0}", username);
+                    return -1;
+                }
+
+                if(user.getLockUntil() != null && System.currentTimeMillis() < user.getLockUntil().getTime() + 30 * 60 * 1000) {
+                    logger.log(Level.WARNING, "Failed login attempt due to user being temporarily locked: {0}", username);
+                    userService.updateNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts() + 1);
+                    throw new AccountLockedException("Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.");
+                }
+
+                userService.unlockUser(user.getId(), 2);
+                user.setStatus(UserStatus.ACTIVE);
+                user.setNumFailedLoginAttempts(0);
+            }
+
+            if (!passwordUtils.checkPassword(password, user.getPasswordHash())) {  
                 userService.updateNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts() + 1);
-                throw new AccountLockedException("Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.");
-            }
 
-            userService.unlockUser(user.getId(), 2);
-            user.setStatus(UserStatus.ACTIVE);
-            user.setNumFailedLoginAttempts(0);
-        }
+                if (user.getNumFailedLoginAttempts() + 1 >= passwordUtils.getMaxNumFailedAttempts()) {
+                    logger.log(Level.WARNING, "User locked due to exceeding allowed number of failed login attempts: {0}", username);
+                    userService.lockUser(user.getId(), 2);
+                    return -1;
+                }
 
-        if (!this.checkPassword(password, user.getPasswordHash())) {
-            int maxFailedAttempts = Integer.parseInt(passwordSettings.get("password.num_failed_attempts_before_lockout"));
-            
-            userService.updateNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts() + 1);
-            if (user.getNumFailedLoginAttempts() + 1 >= maxFailedAttempts) {
-                logger.log(Level.WARNING, "User locked due to exceeding allowed number of failed login attempts: {0}", username);
-                userService.lockUser(user.getId(), 2);
+                logger.log(Level.WARNING, "Incorrect password attempt for user: {0}", username);
                 return -1;
             }
 
-            logger.log(Level.WARNING, "Incorrect password attempt for user: {0}", username);
+            if (user.getPasswordExpiryDate() != null && user.getPasswordExpiryDate().before(new Date(System.currentTimeMillis()))) {
+                logger.log(Level.WARNING, "Password expired for user: {0}", username);
+                throw new PasswordExpiredException("Password has expired. Please reset your password.");
+            }
+
+            userService.resetNumFailedLoginAttempts(user.getId(), 2);
+            logger.log(Level.INFO, "Successfully authenticated user: {0}", username);
+
+            if (user.isFirstLogin()) {
+                logger.log(Level.INFO, "Password change required prior to first login from user: {0}", username);
+                throw new FirstLoginException("Password change required before first login!");
+            }
+
+            userService.updateLastLoginAt(user.getId(), 2);
+            return user.getId();
+        } catch (IllegalArgumentException | SQLException e) {
+            logger.log(Level.SEVERE, "Error authenticating user with username: {0}" + username, e);
             return -1;
         }
-
-        if (user.getPasswordExpiryDate() != null && user.getPasswordExpiryDate().before(new Date(System.currentTimeMillis()))) {
-            logger.log(Level.WARNING, "Password expired for user: {0}", username);
-            throw new PasswordExpiredException("Password has expired. Please reset your password.");
-        }
-
-        userService.resetNumFailedLoginAttempts(user.getId(), 2);
-        logger.log(Level.INFO, "Successfully authenticated user: {0}", username);
-
-        if (user.isFirstLogin()) {
-            logger.log(Level.INFO, "Password change required prior to first login from user: {0}", username);
-            throw new FirstLoginException("Password change required before first login!");
-        }
-
-        userService.updateLastLoginAt(user.getId(), 2);
-        return user.getId();
-    }
-
-    /**
-     * Validates if the given password meets the required password policy.
-     * The password must meet the specified criteria like minimum length, maximum length, required uppercase letters,
-     * lowercase letters, numbers, and special characters.
-     * Additionally, the password must not be part of the recent password history.
-     *
-     * @param userId      The user ID of the account attempting to set a new password.
-     * @param newPassword The new password to be validated.
-     * @return {@code true} if the password is valid, {@code false} otherwise.
-     * @throws SQLException If a database error occurs while checking the password history.
-     */
-    public boolean isValidPassword(Integer userId, String newPassword) throws SQLException {
-        if (newPassword == null || newPassword.isEmpty()) {
-            return false;
-        }
-
-        int minLength = Integer.parseInt(this.passwordSettings.get("password.min_length"));
-        int maxLength = Integer.parseInt(this.passwordSettings.get("password.max_length"));
-
-        if (newPassword.length() < minLength || newPassword.length() > maxLength) {
-            return false;
-        }
-
-        if (Boolean.parseBoolean(this.passwordSettings.get("password.require_uppercase")) &&
-                !newPassword.matches(".*[A-Z].*")) {
-            return false;
-        }
-
-        if (Boolean.parseBoolean(this.passwordSettings.get("password.require_lowercase")) &&
-                !newPassword.matches(".*[a-z].*")) {
-            return false;
-        }
-
-        if (Boolean.parseBoolean(this.passwordSettings.get("password.require_numbers")) &&
-                !newPassword.matches(".*\\d.*")) {
-            return false;
-        }
-
-        if (Boolean.parseBoolean(this.passwordSettings.get("password.require_special_characters")) &&
-                !newPassword.matches(".*[!@#$%^&*].*")) {
-            return false;
-        }
-
-        return !inRecentPasswordHistory(userId, newPassword);
     }
 
     /**
@@ -209,19 +139,23 @@ public class AuthenticationService {
             throw new IllegalArgumentException("User not found!");
         }
 
-        if (!this.checkPassword(oldPassword, user.getPasswordHash())) {
+        if (!passwordUtils.checkPassword(oldPassword, user.getPasswordHash())) {
             throw new SecurityException("Authentication failure!");
         }
 
-        if (!isValidPassword(user.getId(), newPassword)) {
+        if (!passwordUtils.isValidPassword(newPassword)) {
             throw new IllegalArgumentException("New password does not meet security requirements!");
+        }
+
+        if (inRecentPasswordHistory(user.getId(), newPassword)) {
+            throw new IllegalArgumentException("New password cannot match passwords in recent password history!");
         }
 
         if(user.isFirstLogin()) {
             userService.setIsFirstLoginFalse(user.getId(), 2);
         }
 
-        String newPasswordHash = this.hashPassword(newPassword);
+        String newPasswordHash = passwordUtils.hashPassword(newPassword);
         return userService.updatePassword(user.getId(), changedBy, newPasswordHash);
     }
 
@@ -234,15 +168,15 @@ public class AuthenticationService {
      * @throws SQLException if a database error occurs while retrieving the password history.
      */
     public boolean inRecentPasswordHistory(Integer userId, String newPassword) throws SQLException {
-        List<String> passwordHistory = PasswordHistoryViewRepository.loadPasswordHistory(userId, Integer.valueOf(passwordSettings.get("password.history_size")));
-        boolean check = false;
+        List<String> passwordHistory = PasswordHistoryViewRepository.loadPasswordHistory(userId, passwordUtils.getHistorySize());
+        boolean found = false;
         for (String hash : passwordHistory) {
-            if(checkPassword(newPassword, hash)) {
-                check = true;
+            if(passwordUtils.checkPassword(newPassword, hash)) {
+                found = true;
             }
         }
         
-        return check;
+        return found;
     }
 
 }
