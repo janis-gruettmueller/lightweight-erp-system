@@ -15,8 +15,8 @@ public class EmployeeSelfService {
 
     private static final Logger logger = Logger.getLogger(UserService.class.getName());
 
-    private UserEmployeeLinkRepository userEmployeeLinkRepository;
-    private EmployeeRepository employeeRepository;
+    private final UserEmployeeLinkRepository userEmployeeLinkRepository = new UserEmployeeLinkRepository();
+    private final EmployeeRepository employeeRepository = new EmployeeRepository();
 
     public int getEmployeeId(Integer userId) throws SQLException {
         try {

@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "EmployeeController", urlPatterns = "/api/employee/self/*")
+@WebServlet(name = "EmployeeSelfController", urlPatterns = "/api/employee/self/*")
 public class EmployeeSelfController extends HttpServlet {
 
     private final EmployeeSelfService employeeSelfService = new EmployeeSelfService();
@@ -23,17 +23,17 @@ public class EmployeeSelfController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
+        HttpSession session = request.getSession(false);
+        Integer currentUserId = (Integer) session.getAttribute("userId");
 
         if (pathInfo == null || pathInfo.equals("/")) {
-            handleGetEmployeeProfile(request, response);
+            handleGetEmployeeProfile(currentUserId, response);
         } else {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Unknown endpoint!");
         }
     }
 
-     private void handleGetEmployeeProfile(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
-        Integer userId = (Integer) session.getAttribute("userId");
+     private void handleGetEmployeeProfile(Integer userId, HttpServletResponse response) throws IOException {
         try {
             EmployeeProfile employeeProfile = employeeSelfService.getPersonalEmployeeProfile(userId);
             if (employeeProfile == null) {

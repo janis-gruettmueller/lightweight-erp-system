@@ -109,7 +109,7 @@ public class PasswordUtils {
             return null;
         }
 
-        for (int i = 0; i < this.maxLength; i++) {
+        for (int i = 0; i <= this.minLength; i++) {
             int randomIndex = random.nextInt(allChars.length());
             sb.append(allChars.charAt(randomIndex));
         }

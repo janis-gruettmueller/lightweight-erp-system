@@ -63,11 +63,11 @@ public class UserEmployeeLinkRepository {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt("employee_id");
+                } else {
+                    return null;
                 }
             }
         }
-
-        return null;
     }
     
 }

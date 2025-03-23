@@ -14,6 +14,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 @WebServlet(name = "EmployeeController", urlPatterns = "/api/employee/*")
 public class EmployeeController extends HttpServlet {
@@ -31,17 +32,19 @@ public class EmployeeController extends HttpServlet {
             return;
         }
         */
+        HttpSession session = request.getSession(false);
+        Integer currUser = (Integer) session.getAttribute("userId");
 
         String pathInfo = request.getPathInfo();
         
         if (pathInfo == null || pathInfo.equals("/")) {
-            handleCreateEmployee(request, response);
+            handleCreateEmployee(currUser, request, response);
         } else {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Unknown endpoint!");
         }
     }
 
-    private void handleCreateEmployee(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void handleCreateEmployee(Integer currentUserId, HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             Employee newEmployee = objectMapper.readValue(request.getReader(), Employee.class);
 
@@ -50,6 +53,7 @@ public class EmployeeController extends HttpServlet {
                 return;
             }
 
+            newEmployee.setCreatedBy(currentUserId);
             boolean created = employeeService.createEmployeeRecord(newEmployee);
             if (!created) {
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Error creating the employee record!");
@@ -66,15 +70,17 @@ public class EmployeeController extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
+        HttpSession session = request.getSession(false);
+        Integer currUser = (Integer) session.getAttribute("userId");
         
         if (pathInfo != null && pathInfo.startsWith("/")) {
-            handleUpdateEmployee(request, response);
+            handleUpdateEmployee(currUser, request, response);
         } else {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Unknown endpoint!");
         }
     }
 
-    private void handleUpdateEmployee(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private void handleUpdateEmployee(Integer currentUserId, HttpServletRequest request, HttpServletResponse response) throws IOException {
         String pathInfo = request.getPathInfo();
         String employeeIdStr = pathInfo.substring(1); // Remove leading slash
         
@@ -83,6 +89,7 @@ public class EmployeeController extends HttpServlet {
             Employee updatedEmployee = objectMapper.readValue(request.getReader(), Employee.class);
 
             // Update employee in the database using the employee service
+            updatedEmployee.setLastUpdatedBy(currentUserId);
             boolean updated = employeeService.updateEmployeeRecord(employeeId, updatedEmployee);
             if (!updated) {
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Employee not found.");
