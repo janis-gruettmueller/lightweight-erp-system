@@ -1,4 +1,4 @@
-package com.leanx.app.model;
+package com.leanx.app.model.entity;
 
 import java.io.Serializable;
 import java.sql.Date;
@@ -6,12 +6,13 @@ import java.sql.Timestamp;
 
 public class Employee implements Serializable {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 10L;
 
     private Integer id;
     private String firstName;
     private String lastName;
     private String email;
+    private Integer managerId;
     private String jobTitle;
     private String department;
     private EmploymentType employmentType;
@@ -38,12 +39,13 @@ public class Employee implements Serializable {
     public Employee() {}
 
     // Constructor with all fields except auto-generated and default values
-    public Employee(String firstName, String lastName, String email, String jobTitle, String department,
+    public Employee(String firstName, String lastName, String email, Integer managerId, String jobTitle, String department,
                     EmploymentType employmentType, EmploymentStatus employmentStatus, Date hireDate,
                     Integer createdBy) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
+        this.managerId = managerId;
         this.jobTitle = jobTitle;
         this.department = department;
         this.employmentType = employmentType;
@@ -52,11 +54,19 @@ public class Employee implements Serializable {
         this.createdBy = createdBy;
     }
 
+    public Employee(Integer id, String firstName, String lastName, String email) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+    }
+
     // Getters
     public Integer getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
     public String getEmail() { return email; }
+    public Integer getManagerId() { return managerId; }
     public String getJobTitle() { return jobTitle; }
     public String getDepartment() { return department; }
     public EmploymentType getEmploymentType() { return employmentType; }
@@ -76,6 +86,7 @@ public class Employee implements Serializable {
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setEmail(String email) { this.email = email; }
+    public void setManagerId(Integer managerId) { this.managerId = managerId; }
     public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
     public void setDepartment(String department) { this.department = department; }
     public void setEmploymentType(EmploymentType employmentType) { this.employmentType = employmentType; }
@@ -97,6 +108,7 @@ public class Employee implements Serializable {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
+                ", managerId=" + managerId +
                 ", jobTitle='" + jobTitle + '\'' +
                 ", department='" + department + '\'' +
                 ", employmentType=" + employmentType +

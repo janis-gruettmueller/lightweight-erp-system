@@ -1,4 +1,4 @@
-package com.leanx.app.repository;
+package com.leanx.app.repository.base;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;

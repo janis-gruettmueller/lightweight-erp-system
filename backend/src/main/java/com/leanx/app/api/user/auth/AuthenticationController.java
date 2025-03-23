@@ -43,12 +43,6 @@ public class AuthenticationController extends HttpServlet {
         String password = request.getParameter("password");
 
         try {
-            int authUserId = authService.authenticate(username, password);
-            if (authUserId == -1) {
-                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed!");
-                return;
-            }
-
             // Invalidate the current session and create a new session to prevent session fixation
             HttpSession session = request.getSession(false);
             if (session != null) {
@@ -56,17 +50,29 @@ public class AuthenticationController extends HttpServlet {
             }
             session = request.getSession(true);
 
-            // Set the userId and session timeout
+            int authUserId = authService.authenticate(username, password);
+            if (authUserId == -1) {
+                session.invalidate();
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed!");
+                return;
+            }
+
+            // to be implemented!
+            // List<Roles> roles = userRoleViewRepository.loadUserRoles(authUserId);
+
+            // Set the userId, roles and session timeout
             session.setAttribute("userId", authUserId);
+            // session.setAttribute("roles", roles);
             session.setMaxInactiveInterval(SecurityConfig.SESSION_TIMEOUT);
 
-            ApiUtils.sendSuccessResponse(response, "Login successful");
+            ApiUtils.sendJsonResponse(response, "Login successful");
         } catch (FirstLoginException | PasswordExpiredException e) {
             HttpSession session = request.getSession(true);
             try {
                 session.setAttribute("userId", new UserService().getUserId(username));
             } catch (SQLException e1) {
                 ApiUtils.sendExceptionResponse(response, null, e1);
+                session.invalidate();
                 return;
             }
             session.setMaxInactiveInterval(3600); // Session Timeout set to 1 hour
@@ -80,7 +86,7 @@ public class AuthenticationController extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         session.invalidate();
-        ApiUtils.sendSuccessResponse(response, "Logout successful!");
+        ApiUtils.sendJsonResponse(response, "Logout successful!");
     }
 
     private void handleChangePassword(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -97,7 +103,7 @@ public class AuthenticationController extends HttpServlet {
                 return;
             }
 
-            ApiUtils.sendSuccessResponse(response, "Password changed successfully!");
+            ApiUtils.sendJsonResponse(response, "Password changed successfully!");
         } catch (IllegalArgumentException e) {
             ApiUtils.sendExceptionResponse(response, e.getMessage(), e);
         } catch (SQLException e) {

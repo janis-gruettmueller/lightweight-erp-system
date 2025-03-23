@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 
 public class PasswordSettingsView implements Serializable {
 
-    private static final long serialVersionUID = 20L;
+    private static final long serialVersionUID = 200L;
 
     private final Integer id;
     private final String configKey;
