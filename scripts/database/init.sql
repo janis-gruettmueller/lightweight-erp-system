@@ -159,8 +159,9 @@ CREATE TABLE employees (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    job_titel VARCHAR(100),
-    department VARCHAR(100),
+    manager_id INT NOT NULL,
+    job_title VARCHAR(100), -- update to position_id (add positions table if structure gets more complex)
+    department VARCHAR(100), -- update to department_id (add departments table if structure gets more complex)
     employment_type ENUM('FULL_TIME', 'PART_TIME', 'INTERN') NOT NULL,
     employment_status ENUM('ACTIVE', 'TERMINATED', 'RESIGNED', 'RETIRED', 'ON_LEAVE', 'SUSPENDED') NOT NULL,
     hire_date DATE NOT NULL,
@@ -172,6 +173,7 @@ CREATE TABLE employees (
     created_by INT NOT NULL,
     last_updated_by INT DEFAULT NULL,
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (manager_id) REFERENCES employees(id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (last_updated_by) REFERENCES users(id)
 );

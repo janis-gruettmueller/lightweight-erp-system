@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 
 public class PasswordHistoryView implements Serializable {
 
-    private static final long serialVersionUID = 10L;
+    private static final long serialVersionUID = 100L;
 
     private final Integer userId;
     private final String passwordHash;

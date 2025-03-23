@@ -8,7 +8,7 @@ scripts/check-build-local.sh
 
 backend/src/main/java/com/leanx/app/service/EmailService.java
 backend/src/main/java/com/leanx/app/service/jobs/BackupDatabaseJob.java
-backend/src/main/java/com/leanx/app/service/jobs/UserDeactivationOffboardingJob.java
+backend/src/main/java/com/leanx/app/service/jobs/OffboardingJob.java
 backend/src/main/java/com/leanx/app/service/modules/employee/self/TimesheetSelfService.java
 backend/src/main/java/com/leanx/app/service/modules/hr/ops/TimesheetService.java
 

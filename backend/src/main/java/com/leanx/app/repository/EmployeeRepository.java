@@ -10,15 +10,15 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.leanx.app.model.Employee;
-import com.leanx.app.model.Employee.EmploymentStatus;
-import com.leanx.app.model.Employee.EmploymentType;
+import com.leanx.app.model.entity.Employee;
+import com.leanx.app.model.entity.Employee.EmploymentStatus;
+import com.leanx.app.model.entity.Employee.EmploymentType;
 import com.leanx.app.repository.base.CrudRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
-public class EmployeeCrudRepository implements CrudRepository<Employee> {
+public class EmployeeRepository implements CrudRepository<Employee> {
 
-    private static final Logger logger = Logger.getLogger(EmployeeCrudRepository.class.getName());
+    private static final Logger logger = Logger.getLogger(EmployeeRepository.class.getName());
 
     @Override
     public int create(Employee employee) throws IllegalArgumentException, SQLException {
@@ -27,9 +27,8 @@ public class EmployeeCrudRepository implements CrudRepository<Employee> {
         }
 
         String sql = "INSERT INTO employees (first_name, last_name, email, job_title, department, " +
-                "employment_type, employment_status, hire_date, start_date, termination_date, " +
-                "termination_reason, retention_end_date, created_at, created_by) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "employment_type, employment_status, hire_date, start_date, created_by, manager_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
              PreparedStatement SQLStatement = c.prepareStatement(sql)) {
@@ -42,10 +41,8 @@ public class EmployeeCrudRepository implements CrudRepository<Employee> {
             SQLStatement.setString(7, String.valueOf(employee.getEmploymentStatus()));
             SQLStatement.setDate(8, employee.getHireDate());
             SQLStatement.setDate(9, employee.getStartDate());
-            SQLStatement.setDate(10, employee.getTerminationDate());
-            SQLStatement.setString(11, employee.getTerminationReason());
-            SQLStatement.setDate(12, employee.getRetentionEndDate());
-            SQLStatement.setInt(13, employee.getCreatedBy());
+            SQLStatement.setInt(10, employee.getCreatedBy());
+            SQLStatement.setInt(11, employee.getManagerId());
 
             return SQLStatement.executeUpdate();
         } catch (SQLException e) {
@@ -68,6 +65,7 @@ public class EmployeeCrudRepository implements CrudRepository<Employee> {
                     employee.setFirstName(rs.getString("first_name"));
                     employee.setLastName(rs.getString("last_name"));
                     employee.setEmail(rs.getString("email"));
+                    employee.setManagerId(rs.getInt("manager_id"));
                     employee.setJobTitle(rs.getString("job_title"));
                     employee.setDepartment(rs.getString("department"));
 
@@ -156,48 +154,121 @@ public class EmployeeCrudRepository implements CrudRepository<Employee> {
         return employees;
     }
 
-    public Employee read(String firstName, String lastName) throws SQLException {
-
-        String sql = "SELECT * FROM employees WHERE first_name = ? AND last_name = ?";
+    public List<Employee> findStartingToday() throws SQLException {
+        List<Employee> employees = new ArrayList<>();
+        String sql = "SELECT * FROM employees WHERE start_date = CURDATE()";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
-             PreparedStatement SQLStatement = c.prepareStatement(sql)) {
+             PreparedStatement stmt = c.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            SQLStatement.setString(1, firstName);
-            SQLStatement.setString(1, lastName);
-            try (ResultSet rs = SQLStatement.executeQuery()) {
-                if (rs.next()) {
-                    Employee employee = new Employee();
-                    employee.setId(rs.getInt("id"));
-                    employee.setFirstName(rs.getString("first_name"));
-                    employee.setLastName(rs.getString("last_name"));
-                    employee.setEmail(rs.getString("email"));
-                    employee.setJobTitle(rs.getString("job_title"));
-                    employee.setDepartment(rs.getString("department"));
+            while (rs.next()) {
+                employees.add(new Employee(
+                        rs.getInt("id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email")
+                ));
+            }
+        }
 
-                    try {
-                        employee.setEmploymentType(EmploymentType.valueOf(rs.getString("employment_type")));
-                        employee.setEmploymentStatus(EmploymentStatus.valueOf(rs.getString("employment_status")));
-                    } catch (IllegalArgumentException e) {
-                        logger.log(Level.WARNING, "IllegalArgumentException: " + e.getMessage(), e);
-                    }
+        return employees;
+    }
 
-                    employee.setHireDate(rs.getDate("hire_date"));
-                    employee.setStartDate(rs.getDate("start_date"));
-                    employee.setTerminationDate(rs.getDate("termination_date"));
-                    employee.setTerminationReason(rs.getString("termination_reason"));
-                    employee.setRetentionEndDate(rs.getDate("retention_end_date"));
-                    employee.setCreatedAt(rs.getTimestamp("created_at"));
-                    employee.setCreatedBy(rs.getInt("created_by"));
-                    employee.setLastUpdatedBy(rs.getInt("last_updated_by"));
-                    employee.setLastUpdatedAt(rs.getTimestamp("last_updated_at"));
+    public List<Employee> findByName(String name) throws SQLException {
+        List<Employee> employees = new ArrayList<>();
+        String sql = "SELECT id, first_name, last_name, email FROM employees WHERE first_name LIKE ? OR last_name LIKE ?";
 
-                    return employee;
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+             PreparedStatement stmt = c.prepareStatement(sql)) {
+
+            stmt.setString(1, "%" + name + "%");
+            stmt.setString(2, "%" + name + "%");
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    employees.add(new Employee(
+                        rs.getInt("id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email")
+                    ));
                 }
             }
-            return null;
-        } catch (SQLException e) {
-            throw new SQLException("Error retrieving employee: " + firstName + " " + lastName, e);
         }
+        return employees;
+    }
+
+    public Employee findById(Integer id) throws SQLException {
+        Employee employee;
+        String sql = "SELECT id, first_name, last_name, email FROM employees WHERE id = ?";
+
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+             PreparedStatement stmt = c.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                 employee = new Employee(
+                    rs.getInt("id"),
+                    rs.getString("first_name"),
+                    rs.getString("last_name"),
+                    rs.getString("email"));
+            }
+        }
+        return employee;
+    }
+
+    public List<String> findNameById(Integer id) throws SQLException {
+        List<String> name = new ArrayList<>();
+        String sql = "SELECT first_name, last_name FROM employees WHERE id = ?";
+
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+            PreparedStatement stmt = c.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                name.add(rs.getString("first_name"));
+                name.add(rs.getString("last_name"));
+            }
+        }
+        return name;
+    }
+
+    public List<Integer> findDirectSubordinates(Integer managerId) throws SQLException {
+        List<Integer> subordinates = new ArrayList<>();
+        String sql = "SELECT id FROM employees WHERE manager_id = ?";
+
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+            PreparedStatement stmt = c.prepareStatement(sql)) {
+            stmt.setInt(1, managerId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    subordinates.add(rs.getInt("id"));
+                }
+            }
+        }
+        return subordinates;
+    }
+
+    public List<Integer> findAllSubordinates(Integer managerId) throws SQLException {
+        List<Integer> subordinates = new ArrayList<>();  
+        // recursive call to get all indirect subordinates
+        String sql = "WITH RECURSIVE Subordinates AS (" +
+                    "    SELECT id FROM employees WHERE manager_id = ?" +
+                    "    UNION ALL" +
+                    "    SELECT e.id FROM employees e INNER JOIN Subordinates s ON s.id = e.manager_id" +
+                    ")" +
+                    "SELECT id FROM Subordinates";
+        
+        try (Connection c = DatabaseUtils.getMySQLConnection();
+            PreparedStatement stmt = c.prepareStatement(sql)) {
+            stmt.setInt(1, managerId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    subordinates.add(rs.getInt("id"));
+                }
+            }
+        }
+        return subordinates;
     }
 }
