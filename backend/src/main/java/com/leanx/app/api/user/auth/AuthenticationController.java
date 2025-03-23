@@ -1,8 +1,11 @@
 package com.leanx.app.api.user.auth;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leanx.app.service.modules.system.configs.SecurityConfig;
 import com.leanx.app.service.modules.user.admin.UserService;
 import com.leanx.app.service.modules.user.auth.AuthenticationService;
@@ -18,7 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "authController", value = "/api/auth/*")
+@WebServlet(name = "AuthController", value = "/api/auth/*")
 public class AuthenticationController extends HttpServlet {
 
     private final AuthenticationService authService = new AuthenticationService();
@@ -39,8 +42,34 @@ public class AuthenticationController extends HttpServlet {
     }
 
     private void handleLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
+        String username;
+        String password;
+
+        // handle JSON requests
+        if (request.getContentType() != null && request.getContentType().startsWith("application/json")) {
+            // Parse JSON Data
+            try (BufferedReader reader = request.getReader()) {
+                StringBuilder json = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    json.append(line);
+                }
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode jsonNode = mapper.readTree(json.toString());
+
+                // Extract Username and Password
+                username = jsonNode.get("username").asText();
+                password = jsonNode.get("password").asText();
+            } catch (Exception e) {
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON data.");
+                return;
+            }
+        } else {
+            // Handle x-www-form-urlencoded
+            username = request.getParameter("username");
+            password = request.getParameter("password");
+        }
 
         try {
             // Invalidate the current session and create a new session to prevent session fixation
@@ -59,10 +88,9 @@ public class AuthenticationController extends HttpServlet {
 
             // to be implemented!
             // List<Roles> roles = userRoleViewRepository.loadUserRoles(authUserId);
-
-            // Set the userId, roles and session timeout
-            session.setAttribute("userId", authUserId);
             // session.setAttribute("roles", roles);
+
+            session.setAttribute("userId", authUserId);
             session.setMaxInactiveInterval(SecurityConfig.SESSION_TIMEOUT);
 
             ApiUtils.sendJsonResponse(response, "Login successful");
@@ -76,7 +104,7 @@ public class AuthenticationController extends HttpServlet {
                 return;
             }
             session.setMaxInactiveInterval(3600); // Session Timeout set to 1 hour
-            ApiUtils.sendRedirectResponse(response, e.getMessage(), "/change-password");
+            ApiUtils.sendRedirectResponse(response, e.getMessage(), "leanx-backend/api/auth/change-password");
         } catch (AccountLockedException e) {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
@@ -93,8 +121,33 @@ public class AuthenticationController extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         Integer userId = (Integer) session.getAttribute("userId");
-        String oldPassword = request.getParameter("oldPassword");
-        String newPassword = request.getParameter("newPassword");
+        String oldPassword;
+        String newPassword;
+
+        // handle JSON requests
+        if (request.getContentType() != null && request.getContentType().startsWith("application/json")) {
+            // Parse JSON Data
+            try (BufferedReader reader = request.getReader()) {
+                StringBuilder json = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    json.append(line);
+                }
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode jsonNode = mapper.readTree(json.toString());
+
+                oldPassword = jsonNode.get("oldPassword").asText();
+                newPassword = jsonNode.get("newPassword").asText();
+            } catch (Exception e) {
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON data.");
+                return;
+            }
+        } else {
+            // Handle x-www-form-urlencoded
+            oldPassword = request.getParameter("oldPassword");
+            newPassword = request.getParameter("newPassword");
+        }
 
         try {
             boolean success = authService.changePassword(userId, userId, oldPassword, newPassword);

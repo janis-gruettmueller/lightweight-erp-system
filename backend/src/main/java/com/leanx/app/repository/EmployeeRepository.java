@@ -200,7 +200,6 @@ public class EmployeeRepository implements CrudRepository<Employee> {
     }
 
     public Employee findById(Integer id) throws SQLException {
-        Employee employee;
         String sql = "SELECT id, first_name, last_name, email FROM employees WHERE id = ?";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
@@ -209,14 +208,17 @@ public class EmployeeRepository implements CrudRepository<Employee> {
             stmt.setInt(1, id);
 
             try (ResultSet rs = stmt.executeQuery()) {
-                 employee = new Employee(
-                    rs.getInt("id"),
-                    rs.getString("first_name"),
-                    rs.getString("last_name"),
-                    rs.getString("email"));
+                if (rs.next()) {
+                    return new Employee(
+                        rs.getInt("id"),
+                        rs.getString("first_name"),
+                        rs.getString("last_name"),
+                        rs.getString("email")
+                    );
+                }
             }
         }
-        return employee;
+        return null;
     }
 
     public List<String> findNameById(Integer id) throws SQLException {
@@ -227,8 +229,10 @@ public class EmployeeRepository implements CrudRepository<Employee> {
             PreparedStatement stmt = c.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
-                name.add(rs.getString("first_name"));
-                name.add(rs.getString("last_name"));
+                if (rs.next()) {
+                    name.add(rs.getString("first_name"));
+                    name.add(rs.getString("last_name"));
+                }
             }
         }
         return name;
