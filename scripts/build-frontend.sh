@@ -23,6 +23,6 @@ docker build --no-cache -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest
 
 # Push Docker images to Docker Hub
 docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest"
-docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:${GITHUB_RUN_NUMBER}"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:v1.${GITHUB_RUN_NUMBER}"
 
 echo "Build process completed successfully!"
