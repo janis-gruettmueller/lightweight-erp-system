@@ -1,9 +1,19 @@
 services:
-  backend:
+  frontend-server:
+    image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
+    container_name: leanx-frontend
+    restart: always # ensures restarts on failure
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+    - leanx_network
+
+  backend-server:
     image: ${DOCKERHUB_USERNAME}/leanx-erp-system-backend:latest
     container_name: leanx-backend
-    ports: 
-      - 80:8080
+    restart: always
     environment:
       RDS_MYSQL_ENDPOINT: ${RDS_MYSQL_ENDPOINT}
       RDS_MYSQL_PORT: ${RDS_MYSQL_PORT}
@@ -14,16 +24,6 @@ services:
       - leanx_network
     expose:
       - "8080"
-
-  # frontend:
-  #   image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
-  #   container_name: leanx-frontend
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #   networks:
-  #     - leanx_network
 
 networks:
   leanx_network:

@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://16.16.234.230:80/backend-1.0-SNAPSHOT/api/:path*'
+        destination: 'http://backend-server:8080/api/:path*'
       }
     ]
   }

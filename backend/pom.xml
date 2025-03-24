@@ -80,7 +80,7 @@
     </dependencies>
 
     <build>
-        <finalName>leanx-backend</finalName>
+        <finalName>ROOT</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

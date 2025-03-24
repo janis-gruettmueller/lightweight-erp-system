@@ -26,15 +26,15 @@ docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKE
     -f backend/Dockerfile backend
 
 # Build frontend Docker image
-# echo "Building frontend Docker image..."
-# docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:${GITHUB_RUN_NUMBER}" \
-#     -f frontend/Dockerfile frontend
+echo "Building frontend Docker image..."
+docker build -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:${GITHUB_RUN_NUMBER}" \
+    -f frontend/Dockerfile frontend
 
 # Push Docker images to Docker Hub
 echo "Pushing Docker images to Docker Hub..."
 docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest"
 docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:v1.${GITHUB_RUN_NUMBER}"
-# docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest"
-# docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:${GITHUB_RUN_NUMBER}"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:${GITHUB_RUN_NUMBER}"
 
 echo "Build process completed successfully!"

@@ -1,6 +1,7 @@
 package com.leanx.app.utils;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +20,14 @@ public class ApiUtils {
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
 
-        String jsonResponse = objectMapper.writeValueAsString(data);
+        Object formattedData;
+        if (data instanceof String) {
+            formattedData = Map.of("status", data);
+        } else {
+            formattedData = data;
+        } 
+
+        String jsonResponse = objectMapper.writeValueAsString(formattedData);
         response.getWriter().write(jsonResponse);
         response.getWriter().flush();
 
