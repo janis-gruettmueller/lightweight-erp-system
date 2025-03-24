@@ -109,7 +109,7 @@ function SearchParamsComponent() {
         loaded ? "opacity-0" : "opacity-100"} bg-black pointer-events-none z-40`}
       />
   
-        <DashboardLayout children={undefined}>
+        <DashboardLayout>
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-8 bg-white">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl text-black font-bold tracking-tight">Dashboard</h2>
