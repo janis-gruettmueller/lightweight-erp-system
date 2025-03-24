@@ -13,24 +13,41 @@
 
 set -e  # Exit script if any command fails
 
-# Step 1: Pull latest image from DockerHub
-echo "Pulling latest Docker image..."
-docker pull "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" || { echo "🛑 ERROR: Failed to pull Docker image"; exit 1; }
+# Step 1: Pull latest images from DockerHub
+echo "Pulling latest Docker images..."
+docker pull "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" || { echo "🛑 ERROR: Failed to pull backend Docker image"; exit 1; }
+docker pull "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" || { echo "🛑 ERROR: Failed to pull frontend Docker image"; exit 1; }
 
-# Step 2: Run the Docker container
-echo "Starting Docker container..."
-docker run -d --name app-test "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest"
+# Step 2: Run the backend Docker container
+echo "Starting backend Docker container..."
+docker run -d --name backend-test "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest"
 sleep 5  # Wait for the container to start
 
-# Step 4: Verify if the container is running
-if ! docker ps --filter "name=app-test" --filter "status=running" | grep app-test; then
-  echo "🛑 ERROR: Container failed to start or crashed"
+# Step 3: Run the frontend Docker container
+echo "Starting frontend Docker container..."
+docker run -d --name frontend-test -p 8080:80 "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest"
+sleep 5  # Wait for the container to start
+
+# Step 4: Verify if the containers are running
+if ! docker ps --filter "name=backend-test" --filter "status=running" | grep backend-test; then
+  echo "🛑 ERROR: Backend container failed to start or crashed"
   exit 1
 fi
 
-# Step 5: Check logs for errors
-if docker logs app-test | grep -i "error"; then
-  echo "🛑 ERROR: Application logs contain errors"
+if ! docker ps --filter "name=frontend-test" --filter "status=running" | grep frontend-test; then
+  echo "🛑 ERROR: Frontend container failed to start or crashed"
+  exit 1
+fi
+
+# Step 5: Check logs for errors (backend)
+if docker logs backend-test | grep -i "error"; then
+  echo "🛑 ERROR: Backend application logs contain errors"
+  exit 1
+fi
+
+# Step 6: Check logs for errors (frontend)
+if docker logs frontend-test | grep -i "error"; then
+  echo "🛑 ERROR: Frontend application logs contain errors"
   exit 1
 fi
 
