@@ -42,33 +42,42 @@ public class AuthenticationController extends HttpServlet {
     }
 
     private void handleLogin(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String username;
-        String password;
+        String username = null;
+        String password = null;
 
-        // handle JSON requests
-        if (request.getContentType() != null && request.getContentType().startsWith("application/json")) {
-            // Parse JSON Data
-            try (BufferedReader reader = request.getReader()) {
-                StringBuilder json = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    json.append(line);
+        if (request.getContentType() != null) {
+            if (request.getContentType().startsWith("application/json")) {
+                // Parse JSON Data
+                try (BufferedReader reader = request.getReader()) {
+                    StringBuilder json = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        json.append(line);
+                    }
+    
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode jsonNode = mapper.readTree(json.toString());
+    
+                    username = jsonNode.get("username").asText();
+                    password = jsonNode.get("password").asText();
+                } catch (Exception e) {
+                    ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON data.");
+                    return;
                 }
-
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode jsonNode = mapper.readTree(json.toString());
-
-                // Extract Username and Password
-                username = jsonNode.get("username").asText();
-                password = jsonNode.get("password").asText();
-            } catch (Exception e) {
-                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON data.");
-                return;
+            } else if (request.getContentType().startsWith("application/x-www-form-urlencoded")) {
+                // Handle x-www-form-urlencoded
+                username = request.getParameter("username");
+                password = request.getParameter("password");
+            } else if (request.getContentType().startsWith("multipart/form-data")) {
+                // Handle multipart/form-data
+                username = request.getParameter("username");
+                password = request.getParameter("password");
             }
-        } else {
-            // Handle x-www-form-urlencoded
-            username = request.getParameter("username");
-            password = request.getParameter("password");
+        }
+    
+        if (username == null || password == null) {
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Fields cannot be null.");
+            return;
         }
 
         try {
@@ -121,8 +130,8 @@ public class AuthenticationController extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         Integer userId = (Integer) session.getAttribute("userId");
-        String oldPassword;
-        String newPassword;
+        String oldPassword = null;
+        String newPassword = null;
 
         // handle JSON requests
         if (request.getContentType() != null && request.getContentType().startsWith("application/json")) {
@@ -143,10 +152,19 @@ public class AuthenticationController extends HttpServlet {
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON data.");
                 return;
             }
-        } else {
+        } else if (request.getContentType().startsWith("application/x-www-form-urlencoded")) {
             // Handle x-www-form-urlencoded
             oldPassword = request.getParameter("oldPassword");
             newPassword = request.getParameter("newPassword");
+        } else if (request.getContentType().startsWith("multipart/form-data")) {
+            // Handle multipart/form-data
+            oldPassword = request.getParameter("oldPassword");
+            newPassword = request.getParameter("newPassword");
+        }
+
+        if (oldPassword  == null || newPassword == null) {
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Fields cannot be null.");
+            return;
         }
 
         try {
