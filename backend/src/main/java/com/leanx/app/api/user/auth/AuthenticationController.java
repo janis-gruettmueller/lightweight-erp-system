@@ -15,6 +15,7 @@ import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredExcepti
 import com.leanx.app.utils.ApiUtils;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet(name = "AuthController", value = "/api/auth/*")
+@MultipartConfig
 public class AuthenticationController extends HttpServlet {
 
     private final AuthenticationService authService = new AuthenticationService();
