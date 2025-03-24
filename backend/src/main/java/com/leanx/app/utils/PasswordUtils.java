@@ -66,11 +66,7 @@ public class PasswordUtils {
             return false;
         }
 
-        if (this.requireSpecialCharacter && !newPassword.matches(".*[!@#$%&*.].*")) {
-            return false;
-        }
-
-        return true;
+        return !(this.requireSpecialCharacter && !newPassword.matches(".*[!@#$%&*.].*"));
     }
 
     public String generatePassword() {

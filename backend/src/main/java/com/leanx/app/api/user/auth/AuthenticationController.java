@@ -104,7 +104,7 @@ public class AuthenticationController extends HttpServlet {
                 return;
             }
             session.setMaxInactiveInterval(3600); // Session Timeout set to 1 hour
-            ApiUtils.sendRedirectResponse(response, e.getMessage(), "leanx-backend/api/auth/change-password");
+            ApiUtils.sendRedirectResponse(response, e.getMessage(), "/api/auth/change-password");
         } catch (AccountLockedException e) {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
