@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
-    const response = await fetch('http://backend-server:8080/api/auth/logout', {
+    const response = await fetch('http://leanx-backend:8080/api/auth/logout', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
