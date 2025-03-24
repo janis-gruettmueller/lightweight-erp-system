@@ -6,10 +6,10 @@ export async function POST(request: Request) {
     
     console.log('Attempting login with:', {
       username: formData.get('username'),
-      url: 'http://16.16.234.230:80/backend-1.0-SNAPSHOT/api/auth/login'
+      url: 'http://backend-server:8080/api/auth/login'
     })
 
-    const response = await fetch('http://16.16.234.230:80/backend-1.0-SNAPSHOT/api/auth/login', {
+    const response = await fetch('http://backend-server:8080/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
