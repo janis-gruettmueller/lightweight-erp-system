@@ -17,20 +17,20 @@ services:
 
   frontend-server:  # Next.js App (Internal only)
     image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
-    container_name: leanx-frontend-app
+    container_name: leanx-frontend
     restart: always
     environment:
       - NODE_ENV=production
     depends_on:
-      - application-server
+      - backend-server
     networks:
       - leanx_network
     expose:
-      - "3000"  # Only accessible within the Docker network, not publicly
+      - "3000"
 
   backend-server:  # Backend Server (Internal only)
     image: ${DOCKERHUB_USERNAME}/leanx-erp-system-backend:latest
-    container_name: leanx-backend-app
+    container_name: leanx-backend
     restart: always
     environment:
       RDS_MYSQL_ENDPOINT: ${RDS_MYSQL_ENDPOINT}
@@ -41,7 +41,7 @@ services:
     networks:
       - leanx_network
     expose:
-      - "8080"  # Only accessible within the Docker network, not publicly
+      - "8080"
 
 networks:
   leanx_network:
