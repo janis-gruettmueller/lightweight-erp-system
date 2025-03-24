@@ -23,12 +23,25 @@ import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default function DashboardPage() {
-  const [loaded, setLoaded] = useState(false)
-  const searchParams = useSearchParams()
-  const fromLogin = searchParams.get('fromLogin')
+// Create SearchParamsComponent as a top-level component
+function SearchParamsComponent() {
+  const searchParams = useSearchParams();
+  const fromLogin = searchParams.get('fromLogin');
 
-  // Add all sample data arrays here
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (fromLogin) {
+      const timer = setTimeout(() => {
+        setLoaded(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setLoaded(true);
+    }
+  }, [fromLogin]);
+
+  // Add all sample data arrays here (MOVE YOUR DATA HERE)
   const revenueData = [
     { name: 'Mo', value: 40 },
     { name: 'Di', value: 30 },
@@ -87,18 +100,7 @@ export default function DashboardPage() {
   ]
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
-
-  useEffect(() => {
-    if (fromLogin) {
-      const timer = setTimeout(() => {
-        setLoaded(true)
-      }, 100)
-      return () => clearTimeout(timer)
-    } else {
-      setLoaded(true)
-    }
-  }, [fromLogin])
-
+  
   return (
     <div className={`relative min-h-screen w-full transition-colors duration-1000 ease-in-out ${
       loaded ? "bg-background" : "bg-black"}`}
@@ -106,9 +108,8 @@ export default function DashboardPage() {
       <div className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
         loaded ? "opacity-0" : "opacity-100"} bg-black pointer-events-none z-40`}
       />
-
-      <Suspense fallback={<div>Loading...</div>}>
-        <DashboardLayout>
+  
+        <DashboardLayout children={undefined}>
           <div className="flex-1 space-y-4 p-4 md:p-8 pt-8 bg-white">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl text-black font-bold tracking-tight">Dashboard</h2>
@@ -390,8 +391,14 @@ export default function DashboardPage() {
             </Tabs>
           </div>
         </DashboardLayout>
-      </Suspense>
     </div>
-  )
+  );
 }
 
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchParamsComponent />
+    </Suspense>
+  );
+}
