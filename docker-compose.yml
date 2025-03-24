@@ -1,18 +1,36 @@
+version: '3.8'
+
 services:
-  frontend-server:
-    image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
-    container_name: leanx-frontend
-    restart: always # ensures restarts on failure
+  web-server:  # Nginx reverse proxy
+    image: nginx:alpine
+    container_name: leanx-web-server
+    restart: always
     ports:
-      - "80:80"
+      - "80:80" 
     depends_on:
       - backend-server
+      - frontend-server
     networks:
-    - leanx_network
+      - leanx_network
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro  # Mount custom Nginx config
 
-  backend-server:
+  frontend-server:  # Next.js App (Internal only)
+    image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
+    container_name: leanx-frontend-app
+    restart: always
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - application-server
+    networks:
+      - leanx_network
+    expose:
+      - "3000"  # Only accessible within the Docker network, not publicly
+
+  backend-server:  # Backend Server (Internal only)
     image: ${DOCKERHUB_USERNAME}/leanx-erp-system-backend:latest
-    container_name: leanx-backend
+    container_name: leanx-backend-app
     restart: always
     environment:
       RDS_MYSQL_ENDPOINT: ${RDS_MYSQL_ENDPOINT}
@@ -23,7 +41,7 @@ services:
     networks:
       - leanx_network
     expose:
-      - "8080"
+      - "8080"  # Only accessible within the Docker network, not publicly
 
 networks:
   leanx_network:
