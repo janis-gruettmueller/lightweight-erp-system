@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
   try {
+    /*
     const formData = await request.formData()
     
     console.log('Attempting login with:', {
@@ -19,6 +20,29 @@ export async function POST(request: Request) {
         password: formData.get('password') as string,
       }).toString()
     })
+    */
+    const formData = await request.formData();
+
+    console.log('Attempting login with:', {
+      username: formData.get('username'),
+      url: 'http://leanx-backend:8080/api/auth/login',
+    });
+
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+
+    const jsonData = {
+      username: username,
+      password: password,
+    };
+
+    const response = await fetch('http://leanx-backend:8080/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json', // Changed to application/json
+      },
+      body: JSON.stringify(jsonData),    
+    });
 
     console.log('Response status:', response.status)
     
