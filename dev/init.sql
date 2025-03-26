@@ -442,7 +442,7 @@ BEGIN
     END IF;
     
     -- log changes to lock_until
-    IF (NEW.lock_until IS NOT NULL AND OLD.lock_until IS NULL) OR (NEW.lock_until != OLD.lock_until) THEN 
+    IF NEW.lock_until IS NOT NULL AND OLD.lock_until IS NULL THEN 
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
     END IF;
@@ -532,8 +532,14 @@ CREATE TRIGGER set_lockout_period
 BEFORE UPDATE ON users
 FOR EACH ROW
 BEGIN
+    DECLARE lockout_duration INT;
+
     IF NEW.status = 'LOCKED' THEN
-		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE);
+        SELECT CAST(config_value AS UNSIGNED) INTO lockout_duration
+        FROM configurations
+        WHERE config_key = 'password.lockout_duration';
+
+		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL lockout_duration MINUTE);
     END IF;
 END $$
 
