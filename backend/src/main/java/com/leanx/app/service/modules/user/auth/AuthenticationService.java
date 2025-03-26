@@ -65,10 +65,10 @@ public class AuthenticationService {
                     return -1;
                 }
 
-                if(user.getLockUntil() != null && System.currentTimeMillis() < user.getLockUntil().getTime() + 30 * 60 * 1000) {
+                if(user.getLockUntil() != null && System.currentTimeMillis() < user.getLockUntil().getTime() + passwordUtils.getLockoutDuration() * 60 * 1000) {
                     logger.log(Level.WARNING, "Failed login attempt due to user being temporarily locked: {0}", username);
                     userService.updateNumFailedLoginAttempts(user.getId(), 2, user.getNumFailedLoginAttempts() + 1);
-                    throw new AccountLockedException("Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.");
+                    throw new AccountLockedException("Too many failed login attempts! Your account is temporarily locked. Please try again later or contact support.");
                 }
 
                 userService.unlockUser(user.getId(), 2);
