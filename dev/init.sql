@@ -442,7 +442,7 @@ BEGIN
     END IF;
     
     -- log changes to lock_until
-    IF (NEW.lock_until IS NOT NULL AND OLD.lock_until IS NULL) OR (NEW.lock_until != OLD.lock_until) THEN 
+    IF NEW.lock_until IS NOT NULL AND OLD.lock_until IS NULL THEN 
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
     END IF;
