@@ -18,11 +18,11 @@ echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --passwor
 
 # Build frontend Docker image
 echo "Building frontend Docker image..."
-docker build --no-cache -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:v1.${GITHUB_RUN_NUMBER}" \
+docker build --no-cache -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:v1.${GITHUB_RUN_NUMBER}-SNAPSHOT" \
     -f frontend/Dockerfile frontend
 
 # Push Docker images to Docker Hub
 docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest"
-docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:v1.${GITHUB_RUN_NUMBER}"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:v1.${GITHUB_RUN_NUMBER}-SNAPSHOT"
 
 echo "Build process completed successfully!"
