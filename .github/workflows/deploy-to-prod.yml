@@ -1,4 +1,4 @@
-name: CI/CD-Pipeline (Build -> Test -> Deploy) - DEV ENVIRONMENT
+name: CI/CD-Pipeline (Build -> Test -> Deploy) - PROD ENVIRONMENT
 
 on:
   push:

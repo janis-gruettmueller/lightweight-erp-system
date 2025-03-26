@@ -3,7 +3,7 @@
  * Version: 1.0                                                                          *
  * Author: Janis Grüttmüller on 17.02.2025                                               *
  * Description: sql script to initialize the LeanX ERP Systems                           *
- * productive database and configure key system users and access management              *
+ * production database and configure key system users and access management              *
  *                                                                                       *
  * change history:                                                                       *
  * 17.02.2025 - initial schema, viwes, triggers and stored procedures                    *
@@ -372,6 +372,7 @@ SELECT user_id, password_hash, created_at FROM password_history;
 - {event}: Das Ereignis, das den Trigger auslöst (INSERT, UPDATE, DELETE)
 
 * ---------------- triggers for logging changes in the user_history_log table --------------------- */
+START TRANSACTION;
 
 DELIMITER $$
 
@@ -384,10 +385,6 @@ BEGIN
 			JSON_OBJECT('username', NEW.name, 'user_status', NEW.status, 'user_type', NEW.type, 'valid_until', NEW.valid_until), 
             'new user creation');
 END $$
-
-DELIMITER ;
-
-DELIMITER $$
 
 CREATE TRIGGER log_changes
 AFTER UPDATE ON users
@@ -421,7 +418,7 @@ BEGIN
     END IF;
 
     -- log successful logins
-    IF NEW.last_login_at != OLD.last_login_at THEN
+    IF (NEW.last_login_at IS NOT NULL AND OLD.last_login_at IS NULL) OR (NEW.last_login_at!= OLD.last_login_at) THEN
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'last_login_at', OLD.last_login_at, NEW.last_login_at, 'successful login');
     END IF;
@@ -433,31 +430,27 @@ BEGIN
     END IF;
 
     -- log changes to valid until date
-    IF NEW.valid_until != OLD.valid_until THEN 
+    IF (NEW.valid_until IS NOT NULL AND OLD.valid_until IS NULL) OR (NEW.valid_until != OLD.valid_until) THEN 
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'valid_until', OLD.valid_until, NEW.valid_until, 'valid until date changed');
     END IF;
 
     -- log changes to password_expiry_date
-    IF NEW.password_expiry_date != OLD.password_expiry_date THEN 
+    IF (NEW.password_expiry_date IS NOT NULL AND OLD.password_expiry_date IS NULL) OR (NEW.password_expiry_date != OLD.password_expiry_date) THEN 
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_expiry_date', OLD.password_expiry_date, NEW.password_expiry_date, 'password expiry date changed');
     END IF;
     
     -- log changes to lock_until
-    IF NEW.lock_until != OLD.lock_until THEN 
+    IF (NEW.lock_until IS NOT NULL AND OLD.lock_until IS NULL) OR (NEW.lock_until != OLD.lock_until) THEN 
         INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
         VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
     END IF;
 END $$
 
-DELIMITER ;
-
 
 
 /* ------------------ triggers for logging changes in security_audit_log table ------------------- */
-
-DELIMITER $$
 
 CREATE TRIGGER log_access_provisioning
 AFTER INSERT ON user_roles
@@ -467,10 +460,6 @@ BEGIN
     VALUES (NEW.user_id, NEW.role_id, NEW.created_by, NEW.created_at, 'ROLE_ASSIGNED');
 END $$
 
-DELIMITER ;
-
-
-DELIMITER $$
 
 CREATE TRIGGER log_access_deprovisioning
 AFTER DELETE ON user_roles
@@ -480,9 +469,6 @@ BEGIN
     VALUES (OLD.user_id, OLD.role_id, OLD.created_by, 'ROLE_REMOVED'); -- created_by is set to current user in business application logic prior to deleting the table entry
 END $$
 
-DELIMITER ;
-
-DELIMITER $$
 
 /* ------------- triggers for logging changes to password settings in configurations  table -------------- */
 
@@ -499,11 +485,9 @@ BEGIN
     END IF;
 END $$
 
-DELIMITER ;
 
 /* ------------------------------ triggers for User Access Management ------------------------------ */
 
-DELIMITER $$
 
 CREATE TRIGGER set_password_expiry_date_on_update
 BEFORE UPDATE ON users
@@ -522,10 +506,6 @@ BEGIN
     END IF;
 END $$
 
-DELIMITER ;
-
-
-DELIMITER $$
 
 CREATE TRIGGER update_password_history_on_password_change
 AFTER UPDATE ON users
@@ -536,10 +516,6 @@ BEGIN
     END IF;
 END $$
 
-DELIMITER ;
-
-
-DELIMITER $$
 
 CREATE TRIGGER update_password_history_on_insert
 AFTER INSERT ON users
@@ -551,10 +527,6 @@ BEGIN
 	END IF;
 END $$
 
-DELIMITER ;
-
-
-DELIMITER $$
 
 CREATE TRIGGER set_lockout_period
 BEFORE UPDATE ON users
@@ -565,11 +537,7 @@ BEGIN
     END IF;
 END $$
 
-DELIMITER ;
-
 /* ------------------------------- triggers for the HR Modul tables -------------------------------- */
-
-DELIMITER $$
 
 CREATE TRIGGER set_retention_period
 BEFORE UPDATE ON employees
@@ -582,12 +550,14 @@ END $$
 
 DELIMITER ;
 
+COMMIT;
 
 /* =============================================================================================== *
  *                                  define stored procedures                                       *
  * =============================================================================================== */
 
 /* ----------------------------- procedures for user management ---------------------------------- */
+START TRANSACTION;
 
 DELIMITER $$
 
@@ -629,10 +599,8 @@ CREATE PROCEDURE DeactivateUserAccount (
     COMMIT;
 END $$
 
-DELIMITER ;
 
 -- procedure for automated creation of normal user account 
-DELIMITER $$
 
 CREATE PROCEDURE CreateNewUserAccount (
 	IN username_param VARCHAR(50), 
@@ -659,11 +627,8 @@ CREATE PROCEDURE CreateNewUserAccount (
     COMMIT;
 END $$
 
-DELIMITER ;
-
 
 /* ---------------------------- procedures for HR Modul -------------------------------- */
-DELIMITER $$
 
 CREATE PROCEDURE TerminateEmployee (
 	employee_id_param INT
@@ -708,6 +673,8 @@ CREATE PROCEDURE TerminateEmployee (
 END $$
 
 DELIMITER ;
+
+COMMIT;
 
 
 /* =============================================================================================== *
