@@ -17,6 +17,7 @@ public class PasswordUtils {
     private final int historySize;
     private final int minLength;
     private final int maxLength;
+    private final int lockoutDuration;
     private final boolean requireUppercase;
     private final boolean requireLowercase;
     private final boolean requireNumber;
@@ -31,10 +32,12 @@ public class PasswordUtils {
         this.requireLowercase = Boolean.parseBoolean(PASSWORD_SETTINGS.get("password.require_lowercase"));
         this.requireNumber = Boolean.parseBoolean(PASSWORD_SETTINGS.get("password.require_numbers"));
         this.requireSpecialCharacter = Boolean.parseBoolean(PASSWORD_SETTINGS.get("password.require_special_characters"));
+        this.lockoutDuration = Integer.parseInt(PASSWORD_SETTINGS.get("password.lockout_duration"));
     }
 
     public int getMaxNumFailedAttempts() { return maxNumFailedAttempts; }
     public int getHistorySize() { return historySize; }
+    public int getLockoutDuration() { return lockoutDuration; }
 
     /**
      * Validates if the given password meets the required password policy.
