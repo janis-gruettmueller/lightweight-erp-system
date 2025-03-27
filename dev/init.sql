@@ -386,7 +386,7 @@ BEGIN
             'new user creation');
 END $$
 
-CREATE TRIGGER log_changes
+CREATE TRIGGER log_user_changes
 AFTER UPDATE ON users
 FOR EACH ROW
 BEGIN

@@ -1,9 +1,10 @@
 "use client"
 
+import withAuth from '@/utils/withAuth';
 import React, { Suspense } from "react"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 
-export default function SalesPage() {
+export default withAuth(function SalesPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <DashboardLayout>
@@ -14,4 +15,4 @@ export default function SalesPage() {
       </DashboardLayout>
     </Suspense>
   )
-} 
+})

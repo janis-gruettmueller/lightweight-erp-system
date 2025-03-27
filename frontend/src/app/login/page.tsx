@@ -1,14 +1,13 @@
 "use client";
 
-import type React from "react"
-
-import { useState, Suspense } from "react"
-import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
-import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import type React from "react";
+import { useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const [username, setUsername] = useState<string>("");
@@ -22,24 +21,20 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      console.log('Starting login process...');
-      const formData = new FormData();
-      formData.append('username', username);
-      formData.append('password', password);
-
-      console.log('Sending login request...');
       const response = await fetch('/api/auth/login', {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json", // Send data as JSON
+        },
+        body: JSON.stringify({ username, password }), // Serialize data to JSON
       });
 
-      console.log('Response received:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (response.ok) {
-        if (data.redirect === "/change-password") {
-          router.push("/change-password");
+        if (data.tempToken) {
+          // Redirect to change password page with the token and reason as query parameters
+          router.push(`/change-password?token=${data.tempToken}&reason=${data.reason}`);
         } else {
           router.push("/dashboard?fromLogin=true");
         }

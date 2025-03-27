@@ -3,6 +3,7 @@ package com.leanx.app.api.user.auth;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +27,28 @@ import jakarta.servlet.http.HttpSession;
 @MultipartConfig
 public class AuthenticationController extends HttpServlet {
 
+    // private static final Logger logger = Logger.getLogger(ViewRepository.class.getName());
+
     private final AuthenticationService authService = new AuthenticationService();
+
+    @Override 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // logic for verifying session status
+        String path = request.getRequestURI();
+
+        if (path.endsWith("/session")) {
+            HttpSession session = request.getSession(false);
+            if (session == null || session.getAttribute("userId") == null) {
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or Unauthorized Session!");
+                return;
+            }
+
+            ApiUtils.sendJsonResponse(response, "Authorized Session!");
+        } else {
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Unknown endpoint!");
+        }
+    }
+
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -93,7 +115,7 @@ public class AuthenticationController extends HttpServlet {
             int authUserId = authService.authenticate(username, password);
             if (authUserId == -1) {
                 session.invalidate();
-                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed!");
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Incorrect username or password. Please Try again!");
                 return;
             }
 
@@ -106,16 +128,19 @@ public class AuthenticationController extends HttpServlet {
 
             ApiUtils.sendJsonResponse(response, "Login successful");
         } catch (FirstLoginException | PasswordExpiredException e) {
+            // Generate temporary token
+            String tokenPayload = String.format("%d-%d-%s", System.currentTimeMillis(), e.hashCode(), username); // Include username for context
+            String tempToken = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenPayload.getBytes("UTF-8"));
+
+            // Store the temporary token in the session along with the reason
             HttpSession session = request.getSession(true);
-            try {
-                session.setAttribute("userId", new UserService().getUserId(username));
-            } catch (SQLException e1) {
-                ApiUtils.sendExceptionResponse(response, null, e1);
-                session.invalidate();
-                return;
-            }
-            session.setMaxInactiveInterval(3600); // Session Timeout set to 1 hour
-            ApiUtils.sendRedirectResponse(response, e.getMessage(), "/api/auth/change-password");
+            session.setAttribute("tempToken", tempToken);
+            session.setAttribute("passwordChangeReason", e.getMessage());
+            session.setAttribute("username", username);
+            session.setMaxInactiveInterval(3600); // Session valid for 1 hour 
+
+            // Send the temporary token in the JSON response
+            ApiUtils.sendJsonResponse(response, Map.of("tempToken", tempToken, "reason", e.getMessage()));
         } catch (AccountLockedException e) {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
@@ -131,9 +156,17 @@ public class AuthenticationController extends HttpServlet {
     private void handleChangePassword(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);
 
-        Integer userId = (Integer) session.getAttribute("userId");
-        String oldPassword = null;
+        if (session == null || session.getAttribute("tempToken") == null) {
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized access to change password.");
+            return;
+        }
+    
+        String tempTokenFromSession = (String) session.getAttribute("tempToken");
+        String usernameFromSession = (String) session.getAttribute("username");
+    
         String newPassword = null;
+        String confirmNewPassword = null;
+        String tokenFromRequest = null;
 
         // handle JSON requests
         if (request.getContentType() != null && request.getContentType().startsWith("application/json")) {
@@ -148,34 +181,46 @@ public class AuthenticationController extends HttpServlet {
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode jsonNode = mapper.readTree(json.toString());
 
-                oldPassword = jsonNode.get("oldPassword").asText();
                 newPassword = jsonNode.get("newPassword").asText();
+                confirmNewPassword = jsonNode.get("confirmNewPassword").asText();
+                tokenFromRequest = jsonNode.get("token").asText();
             } catch (Exception e) {
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JSON data.");
                 return;
             }
         } else if (request.getContentType().startsWith("application/x-www-form-urlencoded")) {
             // Handle x-www-form-urlencoded
-            oldPassword = request.getParameter("oldPassword");
             newPassword = request.getParameter("newPassword");
+            confirmNewPassword = request.getParameter("confirmNewPassword");
+            tokenFromRequest = request.getParameter("token");
         } else if (request.getContentType().startsWith("multipart/form-data")) {
             // Handle multipart/form-data
-            oldPassword = request.getParameter("oldPassword");
             newPassword = request.getParameter("newPassword");
+            confirmNewPassword = request.getParameter("confirmNewPassword");
+            tokenFromRequest = request.getParameter("token");
         }
 
-        if (oldPassword  == null || newPassword == null) {
-            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Fields cannot be null.");
+        if (newPassword  == null || confirmNewPassword == null) {
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Missing or invalid input.");
             return;
         }
 
+        if (tokenFromRequest == null || !tokenFromRequest.equals(tempTokenFromSession)) {
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or missing token for password change.");
+            return;
+        }
+        
         try {
-            boolean success = authService.changePassword(userId, userId, oldPassword, newPassword);
+            UserService userService = new UserService();
+            Integer userId = userService.getUserId(usernameFromSession);
+
+            boolean success = authService.changePassword(userId, userId, newPassword, confirmNewPassword);
             if (!success) {
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to update password!");
                 return;
             }
 
+            session.invalidate();
             ApiUtils.sendJsonResponse(response, "Password changed successfully!");
         } catch (IllegalArgumentException e) {
             ApiUtils.sendExceptionResponse(response, e.getMessage(), e);

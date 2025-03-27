@@ -93,3 +93,5 @@ jobs:
           RDS_MYSQL_ENDPOINT: ${{ vars.RDS_MYSQL_ENDPOINT }}
           RDS_MYSQL_PORT: ${{ vars.RDS_MYSQL_PORT }}
           RDS_MYSQL_DB_NAME: ${{ vars.RDS_MYSQL_DB_NAME }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}

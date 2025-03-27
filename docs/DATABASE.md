@@ -11,7 +11,7 @@
 ## 2. Database Design
 
 **ER-Diagramm**
-![ER-Diagramm](images/ER_diagramm_dark.png)
+![ER-Diagramm](images/ER_diagramm_light.png)
 
 
 ### Table Definitions
@@ -616,61 +616,69 @@
     DELIMITER ;
     ```
 
-* **`log_changes`**
-    * **Purpose:** Logs changes to user accounts (status, login attempts, password, etc.) in the `history_log` table.
+* **`log_user_changes`**
+    * **Purpose:** Logs changes to user accounts (status, login attempts, password, etc.) in the `user_history_log` table.
     * **SQL Code:**
     ```sql
     DELIMITER $$
 
-    CREATE TRIGGER log_changes
+    CREATE TRIGGER log_user_changes
     AFTER UPDATE ON users
     FOR EACH ROW
     BEGIN
+        -- log changes to the status field
         IF NEW.status != OLD.status THEN
+            -- check if the account was locked
             IF NEW.status = 'LOCKED' THEN
-                INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+                INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
                 VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account locked');
-
+            -- check if the account was deactivated
             ELSEIF NEW.status = 'DEACTIVATED' THEN
-                INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+                INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
                 VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account deactivated');
-
+            -- check if the account was unlocked
             ELSEIF NEW.status = 'ACTIVE' AND OLD.status = 'LOCKED' THEN
-                INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+                INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
                 VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account unlocked');
-
+            -- check if the account was reactivated
             ELSEIF NEW.status = 'ACTIVE' AND OLD.status = 'DELETED' THEN
-                INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+                INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
                 VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'status', OLD.status, NEW.status, 'account reactivated');
             END IF;
         END IF;
 
+        -- log failed login attempts
         IF NEW.num_failed_login_attempts != OLD.num_failed_login_attempts THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'num_failed_login_attempts', OLD.num_failed_login_attempts, NEW.num_failed_login_attempts, 'failed login attempt');
         END IF;
 
-        IF NEW.last_login_at != OLD.last_login_at THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        -- log successful logins
+        IF (NEW.last_login_at IS NOT NULL AND OLD.last_login_at IS NULL) OR (NEW.last_login_at!= OLD.last_login_at) THEN
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'last_login_at', OLD.last_login_at, NEW.last_login_at, 'successful login');
         END IF;
 
+        -- log password changes
         IF NEW.password_hash != OLD.password_hash THEN
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_hash', OLD.password_hash, NEW.password_hash, 'password changed');
         END IF;
 
-        IF NEW.valid_until != OLD.valid_until THEN 
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        -- log changes to valid until date
+        IF (NEW.valid_until IS NOT NULL AND OLD.valid_until IS NULL) OR (NEW.valid_until != OLD.valid_until) THEN 
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'valid_until', OLD.valid_until, NEW.valid_until, 'valid until date changed');
         END IF;
 
-        IF NEW.password_expiry_date != OLD.password_expiry_date THEN 
-            INSERT INTO history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
+        -- log changes to password_expiry_date
+        IF (NEW.password_expiry_date IS NOT NULL AND OLD.password_expiry_date IS NULL) OR (NEW.password_expiry_date != OLD.password_expiry_date) THEN 
+            INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'password_expiry_date', OLD.password_expiry_date, NEW.password_expiry_date, 'password expiry date changed');
         END IF;
-
-        IF NEW.lock_until != OLD.lock_until THEN 
+        
+        -- log changes to lock_until
+        IF NEW.lock_until IS NOT NULL AND OLD.lock_until IS NULL THEN 
             INSERT INTO user_history_log (user_id, changed_by, changed_at, field_name, old_value, new_value, description)
             VALUES (NEW.id, NEW.last_updated_by, NEW.last_updated_at, 'lock_until', OLD.lock_until, NEW.lock_until, 'user temporarily locked');
         END IF;
@@ -917,7 +925,6 @@
         employee_id_param INT
     ) BEGIN
 
-        -- Declare variables for cursor
         DECLARE user_id INT;
         DECLARE done INT DEFAULT 0;
         DECLARE user_cursor CURSOR FOR 
@@ -929,14 +936,12 @@
 
         OPEN user_cursor;
         
-        -- Loop through all associated users and deactivate each one
         read_loop: LOOP
             FETCH user_cursor INTO user_id;
             IF done THEN
                 LEAVE read_loop;
             END IF;
 
-            -- Call DeactivateUserAccount procedure for each user
             CALL DeactivateUserAccount(user_id, 2); -- user_id = 2 is a system user
         END LOOP;
         

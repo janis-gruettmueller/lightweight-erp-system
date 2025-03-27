@@ -1,5 +1,6 @@
 "use client"
 
+import withAuth from '@/utils/withAuth';
 import React, { useState, Suspense } from 'react'
 import { 
   Users,
@@ -21,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 
-export default function HRPage() {
+export default withAuth(function HRPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   return (
@@ -286,4 +287,4 @@ export default function HRPage() {
       </DashboardLayout>
     </Suspense>
   )
-}
+})

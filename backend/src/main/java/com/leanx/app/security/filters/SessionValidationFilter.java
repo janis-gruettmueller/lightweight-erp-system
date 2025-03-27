@@ -2,6 +2,8 @@ package com.leanx.app.security.filters;
 
 import java.io.IOException;
 
+import com.leanx.app.utils.ApiUtils;
+
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterConfig;
@@ -27,16 +29,20 @@ public class SessionValidationFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         String path = httpRequest.getRequestURI();
-        if (path.endsWith("/login") || path.endsWith("/logout")) {
+        if (path.endsWith("/login") || path.endsWith("/logout") || path.endsWith("/change-password")) {
             chain.doFilter(request, response);
             return;
         }
 
         // Get the session if it exists
         HttpSession session = httpRequest.getSession(false); // Don't create a new session if none exists
-        if (session == null || session.getAttribute("userId") == null) {
-            httpResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            httpResponse.getWriter().write("{\"error\": \"Session Expired! Please log in again.\"}");
+        if (session == null) {
+            ApiUtils.sendErrorResponse(httpResponse, HttpServletResponse.SC_UNAUTHORIZED, "invalid or inactive session!");
+            return;
+        }
+
+        if (session.getAttribute("userId") == null) {
+            ApiUtils.sendErrorResponse(httpResponse, HttpServletResponse.SC_UNAUTHORIZED, "unauthorized session!");
             return;
         }
         

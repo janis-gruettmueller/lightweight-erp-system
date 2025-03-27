@@ -1,5 +1,6 @@
 "use client"
 
+import withAuth from '@/utils/withAuth';
 import React, { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { BarChart, LineChart, PieChart } from "lucide-react"
@@ -395,10 +396,10 @@ function SearchParamsComponent() {
   );
 }
 
-export default function DashboardPage() {
+export default withAuth(function DashboardPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <SearchParamsComponent />
     </Suspense>
   );
-}
+})
