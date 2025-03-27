@@ -25,11 +25,11 @@ echo "Connecting to EC2 and updating system..."
 ssh -i $EC2_SSH_KEY $EC2_USER@$EC2_ELASTIC_IP <<EOF
     # Update and upgrade the system
     sudo apt update && sudo apt upgrade -y
-    
+
     # Install Docker
     echo "Installing Docker and Docker Compose..."
     sudo apt install -y docker.io
-    
+
     # Start Docker and enable it to run on startup
     sudo systemctl start docker
     sudo systemctl enable docker
@@ -44,19 +44,24 @@ ssh -i $EC2_SSH_KEY $EC2_USER@$EC2_ELASTIC_IP <<EOF
     sudo docker-compose --version
     echo "Docker and Docker Compose installed successfully!"
 
-    # uncomment in case cronjobs are necessary
+    # Setup automated Docker cleanup cronjob
+    echo "Setting up automated Docker cleanup cronjob (daily at 3:00 AM UTC)..."
+    (crontab -l 2>/dev/null; echo "0 3 * * * sudo docker system prune --filter \"until=24h\" -f") | crontab -
+    echo "Automated Docker cleanup cronjob set up."
+
+    # uncomment in case other cronjobs are necessary
     # Create directory for cronjob error logs
     # mkdir -p ~/logs
 
     # Make scripts executable
     # chmod +x ~/my-script.sh
 
-    # echo "Setting up Cronjobs..."
+    # echo "Setting up other Cronjobs..."
     # (crontab -l 2>/dev/null; echo "0 22 * * 0 ~/my-script.sh") | crontab -
 
     # ... more cronjobs (onboarding, offboarding, etl-pipeline)
 
-    # echo "Cronjobs set up successfully!"
+    # echo "Other Cronjobs set up successfully!"
 EOF
 
 echo "EC2 setup completed!"
