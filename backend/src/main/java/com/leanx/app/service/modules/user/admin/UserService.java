@@ -144,13 +144,17 @@ public final class UserService {
         }
     }
 
+
     public String generateUsername(String firstName, String lastName) throws SQLException {
+        int maxLength = 7;
         try {
-            String normalizedFirstName = firstName.toUpperCase(Locale.GERMAN)
+            String normalizedFirstName = firstName.toLowerCase(Locale.GERMAN)
+                .replace(" ", "")
+                .replace("-", "")
                 .replace("ä", "ae")
                 .replace("ü", "ue")
                 .replace("ö", "oe");
-            String normalizedLastName = lastName.toUpperCase(Locale.GERMAN)
+            String normalizedLastName = lastName.toLowerCase(Locale.GERMAN)
                 .replace(" ", "")
                 .replace("ä", "ae")
                 .replace("ü", "ue")
@@ -158,6 +162,10 @@ public final class UserService {
 
             String baseUsername = normalizedFirstName.substring(0, 1) + normalizedLastName;
             String username = baseUsername;
+            if (username.length() > maxLength) {
+                username = username.substring(0, maxLength);
+            }
+
             int counter = 1;
             while (getUserId(username) != -1) {
                 username = baseUsername + counter;

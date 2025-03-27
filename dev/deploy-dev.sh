@@ -50,5 +50,5 @@ fi
 
 echo "Development environment started!"
 echo "------------------------------------"
-echo "Access the application at: http://localhost:80"
+echo "Access the application at: http://localhost:80/"
 echo "------------------------------------"

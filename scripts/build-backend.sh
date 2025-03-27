@@ -12,6 +12,9 @@
 #!/bin/bash
 set -e  # Exit if any command fails
 
+# Versioning Schema: Major.Minor.Patch
+VERSION="v.1.0.0"
+
 # Build backend with Maven
 echo "Building backend with Maven..."
 mvn clean package
@@ -22,13 +25,14 @@ echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --passwor
 
 # Build backend Docker image
 echo "Building backend Docker image..."
-docker build --no-cache -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:v1.${GITHUB_RUN_NUMBER}-SNAPSHOT" \
+docker build --no-cache -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:$VERSION" -t "$DOCKERHUB_USERNAME/leanx-erp-system-backend:$VERSION-${GITHUB_SHA::7}" \
     -f backend/Dockerfile backend
 
 # Push Docker images to Docker Hub
 echo "Pushing Docker images to Docker Hub..."
 docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:latest"
-docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:v1.${GITHUB_RUN_NUMBER}-SNAPSHOT"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:$VERSION"
+docker push "$DOCKERHUB_USERNAME/leanx-erp-system-backend:$VERSION-${GITHUB_SHA::7}"
 
 
 echo "Build process completed successfully!"

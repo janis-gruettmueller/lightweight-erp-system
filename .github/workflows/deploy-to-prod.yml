@@ -27,7 +27,6 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -50,7 +49,6 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
   
   test:
     needs: [build-backend, build-frontend]
