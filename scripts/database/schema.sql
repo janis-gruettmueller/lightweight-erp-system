@@ -36,10 +36,12 @@ CREATE TABLE users (
         - LOCKED: User is temporarily blocked (e.g., failed logins, security issues).
         - DEACTIVATED: Soft delete -> User cannot log in, and role mappings are removed.
     */
-    type ENUM('NORMAL', 'ADMIN', 'SYSTEM') NOT NULL DEFAULT 'NORMAL',
+    type ENUM('NORMAL', 'ADMIN', 'SYSTEM', 'SUPER') NOT NULL DEFAULT 'NORMAL',
     password_hash VARCHAR(255) NOT NULL,
-    password_expiry_date DATE NOT NULL,
+    password_expiry_date DATE,
     num_failed_login_attempts INT DEFAULT 0,
+    lock_until TIMESTAMP DEFAULT NULL,
+    is_first_login BOOLEAN DEFAULT TRUE,
     last_login_at TIMESTAMP DEFAULT NULL,
     valid_until DATE DEFAULT NULL,
     created_by INT NOT NULL DEFAULT 1, -- Default to System user (user_id = 1)
@@ -85,9 +87,9 @@ CREATE TABLE password_history (
 
 CREATE TABLE configurations  (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    key VARCHAR(255) UNIQUE NOT NULL,
-    value VARCHAR(255) NOT NULL,
-    category ENUM(
+    config_key VARCHAR(255) UNIQUE NOT NULL,
+    config_value VARCHAR(255) NOT NULL,
+    config_category ENUM(
         'PASSWORD_SETTINGS', 
         'EMAIL_SETTINGS', 
         'SECURITY_SETTINGS', 
@@ -117,14 +119,7 @@ CREATE TABLE user_history_log (
     user_id INT NOT NULL,
     changed_by INT NOT NULL,
     changed_at TIMESTAMP NOT NULL,
-    field_name ENUM(
-        'user_status', 
-        'is_verified', 
-        'password_hash', 
-        'num_failed_login_attempts', 
-        'last_login_at', 
-        'valid_until'
-    ) DEFAULT NULL,
+    field_name VARCHAR(255) DEFAULT NULL,
     old_value TEXT DEFAULT NULL,
     new_value TEXT NOT NULL,
     description TEXT DEFAULT NULL,
@@ -141,7 +136,7 @@ CREATE TABLE configuration_change_log (
     old_value TEXT DEFAULT NULL,
     new_value TEXT NOT NULL,
     FOREIGN KEY (changed_by) REFERENCES users(id),
-    FOREIGN KEY (setting_key) REFERENCES configurations(key)
+    FOREIGN KEY (config_key) REFERENCES configurations(config_key)
 );
 
 /*------------ Employee, Payroll, Salary and Benefits (HR Operations) -------------------*/
@@ -152,19 +147,21 @@ CREATE TABLE employees (
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    job_titel VARCHAR(100),
-    department VARCHAR(100),
+    manager_id INT NOT NULL,
+    job_title VARCHAR(100), -- update to position_id (add positions table if structure gets more complex)
+    department VARCHAR(100), -- update to department_id (add departments table if structure gets more complex)
     employment_type ENUM('FULL_TIME', 'PART_TIME', 'INTERN') NOT NULL,
     employment_status ENUM('ACTIVE', 'TERMINATED', 'RESIGNED', 'RETIRED', 'ON_LEAVE', 'SUSPENDED') NOT NULL,
     hire_date DATE NOT NULL,
     start_date DATE DEFAULT NULL,
     termination_date DATE DEFAULT NULL,
-    termination_reason ENUM('Resignation', 'Dismissal', 'End of Contract', 'Retirement'),
+    termination_reason VARCHAR(100), -- possible reasons could be 'Resignation', 'Dismissal', 'End of Contract' or 'Retirement'
     retention_end_date DATE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by INT NOT NULL,
     last_updated_by INT DEFAULT NULL,
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (manager_id) REFERENCES employees(id),
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (last_updated_by) REFERENCES users(id)
 );

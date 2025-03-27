@@ -2,7 +2,9 @@ package com.leanx.app.service.modules.user.admin;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
@@ -122,6 +124,14 @@ public final class UserService {
     public boolean removeRole(Integer userId, Integer assignedBy, String role) {
         // TODO
         return false;
+    }
+
+    public List<String> getRolesForUser(Integer userId) {
+        // TODO
+        List<String> roles = new ArrayList<>();
+
+
+        return roles;
     }
 
     public boolean linkUserToEmployee(Integer userId, Integer employeeId) throws SQLException {

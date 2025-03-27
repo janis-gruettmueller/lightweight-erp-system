@@ -386,7 +386,7 @@ BEGIN
             'new user creation');
 END $$
 
-CREATE TRIGGER log_changes
+CREATE TRIGGER log_user_changes
 AFTER UPDATE ON users
 FOR EACH ROW
 BEGIN
@@ -532,8 +532,14 @@ CREATE TRIGGER set_lockout_period
 BEFORE UPDATE ON users
 FOR EACH ROW
 BEGIN
+    DECLARE lockout_duration INT;
+
     IF NEW.status = 'LOCKED' THEN
-		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE);
+        SELECT CAST(config_value AS UNSIGNED) INTO lockout_duration
+        FROM configurations
+        WHERE config_key = 'password.lockout_duration';
+
+		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL lockout_duration MINUTE);
     END IF;
 END $$
 

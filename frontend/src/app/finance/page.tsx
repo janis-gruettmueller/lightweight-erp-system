@@ -1,5 +1,6 @@
 "use client"
 
+import withAuth from '@/utils/withAuth';
 import React, { useState, Suspense } from 'react'
 import { 
   Calculator, 
@@ -19,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 
-export default function FinancePage() {
+export default withAuth(function FinancePage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   return (
@@ -214,4 +215,4 @@ export default function FinancePage() {
       </DashboardLayout>
     </Suspense>
   )
-}
+})

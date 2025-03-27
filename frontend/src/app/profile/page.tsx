@@ -1,5 +1,6 @@
 "use client"
 
+import withAuth from '@/utils/withAuth';
 import React, { useState, Suspense } from 'react'
 import { 
   User, 
@@ -19,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 
-export default function ProfilePage() {
+export default withAuth(function ProfilePage() {
   const [certificates, setCertificates] = useState([
     { name: 'AWS Certified Solutions Architect', year: '2023', issuer: 'Amazon Web Services' },
     { name: 'Certified Scrum Master', year: '2022', issuer: 'Scrum Alliance' }
@@ -228,4 +229,4 @@ export default function ProfilePage() {
       </DashboardLayout>
     </Suspense>
   )
-}
+})

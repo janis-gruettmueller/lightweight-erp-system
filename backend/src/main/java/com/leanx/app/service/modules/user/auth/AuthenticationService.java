@@ -91,7 +91,7 @@ public class AuthenticationService {
 
             if (user.getPasswordExpiryDate() != null && user.getPasswordExpiryDate().before(new Date(System.currentTimeMillis()))) {
                 logger.log(Level.WARNING, "Password expired for user: {0}", username);
-                throw new PasswordExpiredException("Password has expired. Please reset your password.");
+                throw new PasswordExpiredException("Password has expired.");
             }
 
             userService.resetNumFailedLoginAttempts(user.getId(), 2);
@@ -99,7 +99,7 @@ public class AuthenticationService {
 
             if (user.isFirstLogin()) {
                 logger.log(Level.INFO, "Password change required prior to first login from user: {0}", username);
-                throw new FirstLoginException("Password change required before first login!");
+                throw new FirstLoginException("Initial password must be changed before first login.");
             }
 
             userService.updateLastLoginAt(user.getId(), 2);
@@ -112,9 +112,9 @@ public class AuthenticationService {
 
     /**
      * Changes the user's password.
-     * This method validates the old password, validates the new password against the policy, hashes it, and updates the user's password in the database.
+     * This method validates the new password against the policy, hashes it, and updates the user's password in the database.
      *
-     * @param identifierObj The user identifier, either a User object or a user identifier that {@link UserService#getUserByIdentifier(Object)} can handle.
+     * @param identifierObj The user identifier that {@link UserService#getUserByIdentifier(Object)} can handle.
      * @param changedBy     The ID of the user who is changing the password.
      * @param oldPassword   The old password to be changed.
      * @param newPassword   The new password to be set.
@@ -123,24 +123,19 @@ public class AuthenticationService {
      * @throws IllegalArgumentException If the user or password is invalid.
      * @throws SecurityException        If the authentication fails.
      */
-    public boolean changePassword(Object identifierObj, Integer changedBy, String oldPassword, String newPassword) throws SQLException, IllegalArgumentException, SecurityException {
-        if (identifierObj == null || newPassword == null || newPassword.isEmpty() || oldPassword == null || oldPassword.isEmpty()) {
+    public boolean changePassword(Object identifierObj, Integer changedBy, String newPassword, String confirmNewPassword) throws SQLException, IllegalArgumentException, SecurityException {
+        if (identifierObj == null || newPassword == null || newPassword.isEmpty() || confirmNewPassword == null || confirmNewPassword.isEmpty()) {
             throw new IllegalArgumentException("Missing or illegal argument!");
         }
 
-        User user;
-        if (identifierObj instanceof User userObj) {
-            user = userObj;
-        } else {
-            user = userService.getUserByIdentifier(identifierObj);
-        }
+        User user = userService.getUserByIdentifier(identifierObj);
     
         if (user == null) {
             throw new IllegalArgumentException("User not found!");
         }
 
-        if (!passwordUtils.checkPassword(oldPassword, user.getPasswordHash())) {
-            throw new SecurityException("Authentication failure!");
+        if (!newPassword.equals(confirmNewPassword)) {
+            throw new IllegalArgumentException("Passwords do not match!");
         }
 
         if (!passwordUtils.isValidPassword(newPassword)) {
