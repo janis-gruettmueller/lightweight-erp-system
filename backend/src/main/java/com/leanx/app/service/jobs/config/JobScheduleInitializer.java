@@ -39,6 +39,23 @@ public class JobScheduleInitializer implements ServletContextListener {
                     .build();
 
             // Define Trigger (Runs every day at 1:00 AM)
+            /* Cron Expressions: 
+                *  *  *  *  *  *  *
+                |  |  |  |  |  |  |-- Year (optional)
+                |  |  |  |  |  +----- Day of the Week (1-7 or SUN-SAT)
+                |  |  |  |  +-------- Month (0-11 or JAN-DEC)
+                |  |  |  +----------- Day of the Month (1-31)
+                |  |  +-------------- Hour (0-23)
+                |  +----------------- Minute (0-59)
+                +-------------------- Second (0-59)    
+
+                ? <-- wildcard since one field is definied that makes other field obsolete
+                examples:
+                0 * * * * ? --> Triggers every minute
+                0 0 * * * ? --> Triggers every hour
+                0 0 1 * * ? --> Triggers every day at 1:00 AM
+                0 0/15 * * ? --> Triggers every 15 minutes
+            */ 
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("dailyTrigger", "hr-ops")
                     .withSchedule(CronScheduleBuilder.cronSchedule("0 0 1 * * ?"))

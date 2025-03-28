@@ -28,13 +28,11 @@ public class DatabaseUtils {
 
     // Method to connect to database
     public static Connection getMySQLConnection() throws SQLException {
-        logger.log(Level.INFO, "Attempting to connect to database: {0}", JDBC_URL + DB_NAME);
         try {
             Connection c = DriverManager.getConnection(JDBC_URL + DB_NAME, DB_USER, DB_PASSWORD);
-            logger.info("Database connection successful!");
             return c;
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Failed to connect to database: {0}", e.getMessage());
+            logger.log(Level.SEVERE, "Failed to connect to database: {0}", JDBC_URL + DB_NAME + e.getMessage());
             throw e;
         }
     }

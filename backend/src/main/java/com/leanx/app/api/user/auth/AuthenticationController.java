@@ -27,7 +27,7 @@ import jakarta.servlet.http.HttpSession;
 @MultipartConfig
 public class AuthenticationController extends HttpServlet {
 
-    // private static final Logger logger = Logger.getLogger(ViewRepository.class.getName());
+    // private static final Logger logger = Logger.getLogger(AuthenticationController.class.getName());
 
     private final AuthenticationService authService = new AuthenticationService();
 
@@ -38,11 +38,13 @@ public class AuthenticationController extends HttpServlet {
 
         if (path.endsWith("/session")) {
             HttpSession session = request.getSession(false);
+            // logger.log(Level.INFO, "GET request made to /api/auth/session");
             if (session == null || session.getAttribute("userId") == null) {
+                // logger.log(Level.WARNING, "invalid or unauthorized session: {0}", session);
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or Unauthorized Session!");
                 return;
             }
-
+            // logger.log(Level.INFO, "authorized session");
             ApiUtils.sendJsonResponse(response, "Authorized Session!");
         } else {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND, "Unknown endpoint!");
@@ -131,8 +133,8 @@ public class AuthenticationController extends HttpServlet {
             // Generate temporary token
             String tokenPayload = String.format("%d-%d-%s", System.currentTimeMillis(), e.hashCode(), username); // Include username for context
             String tempToken = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenPayload.getBytes("UTF-8"));
-
-            // Store the temporary token in the session along with the reason
+            
+          // Stores the temporary token in the session along with the reason and username
             HttpSession session = request.getSession(true);
             session.setAttribute("tempToken", tempToken);
             session.setAttribute("passwordChangeReason", e.getMessage());
@@ -211,12 +213,11 @@ public class AuthenticationController extends HttpServlet {
         }
         
         try {
-            UserService userService = new UserService();
-            Integer userId = userService.getUserId(usernameFromSession);
+            Integer userId = new UserService().getUserId(usernameFromSession);
 
             boolean success = authService.changePassword(userId, userId, newPassword, confirmNewPassword);
             if (!success) {
-                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to update password!");
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "New password does not meet security requirements. Failed to update password!");
                 return;
             }
 

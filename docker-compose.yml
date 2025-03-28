@@ -36,6 +36,8 @@ services:
       RDS_MYSQL_USER: ${RDS_MYSQL_USER}
       RDS_MYSQL_PASSWORD: ${RDS_MYSQL_PASSWORD}
       RDS_MYSQL_DB_NAME: ${RDS_MYSQL_DB_NAME}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
     networks:
       - leanx_network
     expose:
