@@ -1,0 +1,9 @@
+frontend/src/script/fetch-tenders.ts = Hier werden die Daten aus dem RSS-Feed aberufen und in der Datenbank gespeichert
+
+frontend/src/app/api/tenders/route.ts = Hier holt das Frontend die Daten aus der DB
+
+frontend/src/app/sales/page.tsx = Hier werden dann eben über die URL /sales die Ausschreibungen angezeigt
+
+Ablauf:
+
+fetch-tenders holt daten aus dem RSS Feed und speichertt diese dann in der Supabase Datenbank.... sales/page macht eine Anfrage an /api/tenders und route.ts holt dann die Daten aus der Datenbank, welche dann im Frontend angezegit werden.
