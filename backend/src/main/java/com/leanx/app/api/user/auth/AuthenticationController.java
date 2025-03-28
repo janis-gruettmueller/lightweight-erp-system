@@ -217,14 +217,14 @@ public class AuthenticationController extends HttpServlet {
 
             boolean success = authService.changePassword(userId, userId, newPassword, confirmNewPassword);
             if (!success) {
-                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "New password does not meet security requirements. Failed to update password!");
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to update password!");
                 return;
             }
 
             session.invalidate();
             ApiUtils.sendJsonResponse(response, "Password changed successfully!");
         } catch (IllegalArgumentException e) {
-            ApiUtils.sendExceptionResponse(response, e.getMessage(), e);
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (SQLException e) {
             ApiUtils.sendExceptionResponse(response, null, e);
         } catch (SecurityException e) {

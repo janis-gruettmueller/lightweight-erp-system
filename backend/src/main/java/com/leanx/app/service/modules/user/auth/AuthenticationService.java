@@ -2,9 +2,11 @@ package com.leanx.app.service.modules.user.auth;
 
 import java.sql.Date;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import com.leanx.app.model.entity.User;
 import com.leanx.app.model.entity.User.UserStatus;
@@ -139,7 +141,22 @@ public class AuthenticationService {
         }
 
         if (!passwordUtils.isValidPassword(newPassword)) {
-            throw new IllegalArgumentException("New password does not meet security requirements!");
+            List<String> errors = new ArrayList<>();
+            if (newPassword.length() < passwordUtils.getMinLength()) {
+                errors.add("- Minimum password length is " + passwordUtils.getMinLength() + ".");
+            }
+            if (passwordUtils.isRequireUppercase() && !Pattern.compile("[A-Z]").matcher(newPassword).find()) {
+                errors.add("- Must contain at least one uppercase letter.");
+            }
+            if (passwordUtils.isRequireNumber() && !Pattern.compile("\\d").matcher(newPassword).find()) {
+                errors.add("- Must contain at least one number.");
+            }
+            if (passwordUtils.isRequireSpecialCharacter() && !Pattern.compile("[!@#$%&*.]").matcher(newPassword).find()) {
+                errors.add("- Must contain at least one special character (!@#$%&*. ).");
+            }
+
+            String errorMessage = "New password does not meet security requirements:\n" + String.join("\n", errors);
+            throw new IllegalArgumentException(errorMessage);
         }
 
         if (inRecentPasswordHistory(user.getId(), newPassword)) {

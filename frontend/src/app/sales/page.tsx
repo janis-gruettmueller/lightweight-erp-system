@@ -1,5 +1,6 @@
 "use client"
 
+import withAuth from '@/utils/withAuth';
 import React, { Suspense, useEffect, useState } from "react"
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-export default function SalesPage() {
+export default withAuth(function SalesPage() {
   const [tenders, setTenders] = useState<Tender[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -289,4 +290,4 @@ export default function SalesPage() {
       </DashboardLayout>
     </Suspense>
   )
-}
+})
