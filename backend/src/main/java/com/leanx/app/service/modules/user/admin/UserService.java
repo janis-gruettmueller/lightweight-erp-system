@@ -144,7 +144,6 @@ public final class UserService {
         }
     }
 
-
     public String generateUsername(String firstName, String lastName) throws SQLException {
         int maxLength = 7;
         try {

@@ -56,12 +56,12 @@ ssh -i $EC2_SSH_KEY $EC2_USER@$EC2_ELASTIC_IP <<EOF
     # Make scripts executable
     # chmod +x ~/my-script.sh
 
-    # echo "Setting up other Cronjobs..."
+    # echo "Setting up Cronjobs..."
     # (crontab -l 2>/dev/null; echo "0 22 * * 0 ~/my-script.sh") | crontab -
 
     # ... more cronjobs (onboarding, offboarding, etl-pipeline)
 
-    # echo "Other Cronjobs set up successfully!"
+    # echo "Cronjobs set up successfully!"
 EOF
 
 echo "EC2 setup completed!"

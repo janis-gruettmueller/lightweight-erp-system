@@ -22,8 +22,6 @@ public class EmailService {
     private final String smtpPassword = System.getenv("SMTP_PASSWORD");
 
     public void sendCredentialsEmail(String to, String username, String password) {
-        logger.log(Level.INFO, "SMTP_USR: {0}, SMTP_PASSWORD: {1}", new Object[]{smtpUsername, smtpPassword});
-
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
@@ -43,7 +41,6 @@ public class EmailService {
             message.setFrom(new InternetAddress(smtpUsername));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
             message.setSubject("Dein neuer LeanX Account");
-
             String messageBody = String.format("""
                 <!DOCTYPE html>
                 <html>

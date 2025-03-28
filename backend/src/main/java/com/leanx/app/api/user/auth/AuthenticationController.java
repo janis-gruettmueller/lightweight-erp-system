@@ -44,7 +44,6 @@ public class AuthenticationController extends HttpServlet {
                 ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or Unauthorized Session!");
                 return;
             }
-
             // logger.log(Level.INFO, "authorized session");
             ApiUtils.sendJsonResponse(response, "Authorized Session!");
         } else {
@@ -134,8 +133,8 @@ public class AuthenticationController extends HttpServlet {
             // Generate temporary token
             String tokenPayload = String.format("%d-%d-%s", System.currentTimeMillis(), e.hashCode(), username); // Include username for context
             String tempToken = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(tokenPayload.getBytes("UTF-8"));
-
-            // Stores the temporary token in the session along with the reason and username
+            
+          // Stores the temporary token in the session along with the reason and username
             HttpSession session = request.getSession(true);
             session.setAttribute("tempToken", tempToken);
             session.setAttribute("passwordChangeReason", e.getMessage());
