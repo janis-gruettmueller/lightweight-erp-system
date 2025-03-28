@@ -37,7 +37,14 @@ public class PasswordUtils {
 
     public int getMaxNumFailedAttempts() { return maxNumFailedAttempts; }
     public int getHistorySize() { return historySize; }
+    public int getMinLength() { return minLength; }
+    public int getMaxLength() { return maxLength; }
     public int getLockoutDuration() { return lockoutDuration; }
+    public boolean isRequireUppercase() { return requireUppercase; }
+    public boolean isRequireLowercase() { return requireLowercase; }
+    public boolean isRequireNumber() { return requireNumber; }
+    public boolean isRequireSpecialCharacter() { return requireSpecialCharacter; }
+
 
     /**
      * Validates if the given password meets the required password policy.
@@ -136,4 +143,5 @@ public class PasswordUtils {
     public boolean checkPassword(String plainTextPassword, String hashedPassword) {
         return BCrypt.checkpw(plainTextPassword, hashedPassword);
     }
+
 }
