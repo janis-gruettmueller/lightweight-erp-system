@@ -33,7 +33,7 @@ public class OnboardingJob implements Job {
         try {
             List<Employee> newEmployees = employeeRepository.findStartingToday();
             if (newEmployees.isEmpty()) {
-                logger.log(Level.INFO, "Successfully Executed Onboarding Job! No new users were created.");
+                logger.log(Level.INFO, "Successfully Executed Onboarding Job. No new users were created!");
                 return;
             }
             
@@ -45,7 +45,7 @@ public class OnboardingJob implements Job {
                 storedProceduresRepository.callCreateNewUserAccount(username, passwordHash, employee.getId());
                 emailService.sendCredentialsEmail(employee.getEmail(), username, password);
             }
-            logger.log(Level.INFO, "Successfully Executed Onboarding Job!");
+            logger.log(Level.INFO, "Successfully Executed Onboarding Job. {0} new users were created!", newEmployees.size());
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Error accessing the database: {0}", e);
         }
