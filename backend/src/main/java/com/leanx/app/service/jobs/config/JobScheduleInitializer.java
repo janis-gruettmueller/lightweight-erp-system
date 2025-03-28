@@ -57,8 +57,8 @@ public class JobScheduleInitializer implements ServletContextListener {
                 0 0/15 * * ? --> Triggers every 15 minutes
             */ 
             Trigger trigger = TriggerBuilder.newTrigger()
-                    .withIdentity("everyMinuteTrigger", "hr-ops")
-                    .withSchedule(CronScheduleBuilder.cronSchedule("0 0/15 * * * ?"))
+                    .withIdentity("dailyTrigger", "hr-ops")
+                    .withSchedule(CronScheduleBuilder.cronSchedule("0 0 1 * * ?"))
                     .build();
 
             // Schedule the job
