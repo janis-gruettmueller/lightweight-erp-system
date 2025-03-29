@@ -15,8 +15,8 @@ set -e  # Exit if any command fails
 # Configuration Variables
 TEMP_SSH_KEY=AWS_EC2_ACCESS_KEY_TEMP.pem
 DOCKER_COMPOSE_FILE=docker-compose.yml
-NGINX_CONF_FILE=../web-server/nginx.conf
-REVERSE_PROXY_CONF_FILE=../web-server/reverse-proxy.conf
+NGINX_CONF_FILE=web-server/nginx.conf
+REVERSE_PROXY_CONF_FILE=web-server/reverse-proxy.conf
 ENV_FILE=.env
 
 # Step 1: Save GitHub Secret (SSH Key) to a File & Set Permissions
