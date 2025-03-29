@@ -2,11 +2,9 @@ package com.leanx.app.service.modules.user.auth;
 
 import java.sql.Date;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import com.leanx.app.model.entity.User;
 import com.leanx.app.model.entity.User.UserStatus;
@@ -93,7 +91,7 @@ public class AuthenticationService {
 
             if (user.getPasswordExpiryDate() != null && user.getPasswordExpiryDate().before(new Date(System.currentTimeMillis()))) {
                 logger.log(Level.WARNING, "Password expired for user: {0}", username);
-                throw new PasswordExpiredException("Password has expired.");
+                throw new PasswordExpiredException("Password is expired. Please set a new password.");
             }
 
             userService.resetNumFailedLoginAttempts(user.getId(), 2);
@@ -101,7 +99,7 @@ public class AuthenticationService {
 
             if (user.isFirstLogin()) {
                 logger.log(Level.INFO, "Password change required prior to first login from user: {0}", username);
-                throw new FirstLoginException("Initial password must be changed before first login.");
+                throw new FirstLoginException("First Login. Please set a new password.");
             }
 
             userService.updateLastLoginAt(user.getId(), 2);
@@ -141,26 +139,11 @@ public class AuthenticationService {
         }
 
         if (!passwordUtils.isValidPassword(newPassword)) {
-            List<String> errors = new ArrayList<>();
-            if (newPassword.length() < passwordUtils.getMinLength()) {
-                errors.add("- Minimum password length is " + passwordUtils.getMinLength() + ".");
-            }
-            if (passwordUtils.isRequireUppercase() && !Pattern.compile("[A-Z]").matcher(newPassword).find()) {
-                errors.add("- Must contain at least one uppercase letter.");
-            }
-            if (passwordUtils.isRequireNumber() && !Pattern.compile("\\d").matcher(newPassword).find()) {
-                errors.add("- Must contain at least one number.");
-            }
-            if (passwordUtils.isRequireSpecialCharacter() && !Pattern.compile("[!@#$%&*.]").matcher(newPassword).find()) {
-                errors.add("- Must contain at least one special character (!@#$%&*. ).");
-            }
-
-            String errorMessage = "New password does not meet security requirements:\n" + String.join("\n", errors);
-            throw new IllegalArgumentException(errorMessage);
+            throw new IllegalArgumentException("New password does not meet security requirements");
         }
 
         if (inRecentPasswordHistory(user.getId(), newPassword)) {
-            throw new IllegalArgumentException("New password cannot match passwords in recent password history!");
+            throw new IllegalArgumentException("New password is in recent password history!");
         }
 
         if(user.isFirstLogin()) {

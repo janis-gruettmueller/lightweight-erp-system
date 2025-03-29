@@ -49,10 +49,10 @@ public class EmailService {
                 <title>Dein neuer LeanX Account</title>
                 </head>
                 <body>
-                    <p style="color:red;"><b>ACHTUNG!</b> Dies ist eine automatisierte E-Mail. Bitte antworten Sie nicht hierauf!</p>
+                    <p style="color:red;"><b>ACHTUNG!</b> Dies ist eine automatisch generierte E-Mail. Bitte antworten Sie nicht hierauf!</p>
                     <br>
                     <p>Willkommen im Team!</p>
-                    <p>Hier sind Deine Zugangsdaten für <b>LeanX</b>, unser eigensentwickletes lightweight ERP-System:</p>
+                    <p>Hier sind Ihre Zugangsdaten für <b>LeanX</b>, unser selbst entwickletes lightweight ERP-System:</p>
                     <ul>
                         <li>Login: <a href="www.lean-x.de">www.lean-x.de</a></li>
                     </ul>
@@ -61,12 +61,12 @@ public class EmailService {
                         <li><b>Benutzername:</b> %s</li>
                         <li><b>Passwort:</b> %s</li>
                     </ul>
-                    <p><b>WICHTIG:</b> Dein Passwort läuft in <b>5 Tagen</b> ab! Bitte ändere es rechtzeitig.</p>
-                    <p>Bei Fragen oder Problemen wende Dich bitte an den IT-Support.</p>
+                    <p><b>WICHTIG:</b> Das Passwort läuft in <b>5 Tagen</b> ab! Bitte ändern Sie es rechtzeitig.</p>
+                    <p>Bei Fragen oder Problemen wenden Sie sich bitte an den IT-Support:</p>
                     <br>
                     <p>it.support@lean-x.de</p>
                     <br>
-                    <p>Beste Grüße<br>Ihr IT-Service-Team<br><b>SalesUP GmbH IT</b></p>
+                    <p>Beste Grüße<br>Dein IT-Service-Team<br><b>SalesUP GmbH IT</b></p>
                 </body>
                 </html>
                 """, username, password);
