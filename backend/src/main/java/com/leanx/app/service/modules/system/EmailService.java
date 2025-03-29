@@ -16,7 +16,7 @@ public class EmailService {
 
     private static final Logger logger = Logger.getLogger(EmailService.class.getName());
 
-    private final String smtpHost = "smtp.gmail.com";
+    private final String smtpHost = System.getenv("SMTP_HOST");
     private final int smtpPort = 587;
     private final String smtpUsername = System.getenv("SMTP_USERNAME");
     private final String smtpPassword = System.getenv("SMTP_PASSWORD");
@@ -40,7 +40,7 @@ public class EmailService {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(smtpUsername));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-            message.setSubject("Dein neuer LeanX Account");
+            message.setSubject("NO-REPLY: Dein neuer LeanX Account");
             String messageBody = String.format("""
                 <!DOCTYPE html>
                 <html>
@@ -52,17 +52,19 @@ public class EmailService {
                     <p style="color:red;"><b>ACHTUNG!</b> Dies ist eine automatisierte E-Mail. Bitte antworten Sie nicht hierauf!</p>
                     <br>
                     <p>Willkommen im Team!</p>
-                    <p>Hier sind Ihre Zugangsdaten für <b>LeanX</b>, unser lightweight ERP-System:</p>
+                    <p>Hier sind Deine Zugangsdaten für <b>LeanX</b>, unser eigensentwickletes lightweight ERP-System:</p>
                     <ul>
-                        <li>Login: <a href="http://16.16.234.230:80/login">http://16.16.234.230:80/login</a></li>
+                        <li>Login: <a href="www.lean-x.de">www.lean-x.de</a></li>
                     </ul>
                     <p>Ihre Zugangsdaten:</p>
                     <ul>
                         <li><b>Benutzername:</b> %s</li>
                         <li><b>Passwort:</b> %s</li>
                     </ul>
-                    <p><b>WICHTIG:</b> Ihr Passwort läuft in <b>5 Tagen</b> ab! Bitte ändern Sie es rechtzeitig.</p>
-                    <p>Bei Fragen oder Problemen wenden Sie sich bitte an den IT-Support.</p>
+                    <p><b>WICHTIG:</b> Dein Passwort läuft in <b>5 Tagen</b> ab! Bitte ändere es rechtzeitig.</p>
+                    <p>Bei Fragen oder Problemen wende Dich bitte an den IT-Support.</p>
+                    <br>
+                    <p>it.support@lean-x.de</p>
                     <br>
                     <p>Beste Grüße<br>Ihr IT-Service-Team<br><b>SalesUP GmbH IT</b></p>
                 </body>

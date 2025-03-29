@@ -46,6 +46,7 @@ services:
       RDS_MYSQL_DB_NAME: leanx_erp_dev
       SMTP_USERNAME: test.salesup.it@gmail.com
       SMTP_PASSWORD: kptl ijgp fzzf psxh
+      SMTP_HOST: smtp.gmail.com
     depends_on:
       - dev-db-server
     networks:

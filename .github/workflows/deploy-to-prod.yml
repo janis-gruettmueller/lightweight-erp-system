@@ -96,3 +96,4 @@ jobs:
           RDS_MYSQL_DB_NAME: ${{ vars.RDS_MYSQL_DB_NAME }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
