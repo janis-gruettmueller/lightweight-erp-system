@@ -15,7 +15,8 @@ set -e  # Exit if any command fails
 # Configuration Variables
 TEMP_SSH_KEY=AWS_EC2_ACCESS_KEY_TEMP.pem
 DOCKER_COMPOSE_FILE=docker-compose.yml
-NGINX_CONF_FILE=nginx.conf
+NGINX_CONF_FILE=../web-server/nginx.conf
+REVERSE_PROXY_CONF_FILE=../web-server/reverse-proxy.conf
 ENV_FILE=.env
 
 # Step 1: Save GitHub Secret (SSH Key) to a File & Set Permissions
@@ -39,7 +40,7 @@ echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}" >> $ENV_FI
 
 # Step 3: Copy .env and docker-compose.yml to EC2
 echo "Copying .env and docker-compose.yml to EC2 instance..."
-scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE $NGINX_CONF_FILE $EC2_USER@$EC2_ELASTIC_IP:/home/ubuntu/
+scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE $NGINX_CONF_FILE $REVERSE_PROXY_CONF_FILE $EC2_USER@$EC2_ELASTIC_IP:/home/ubuntu/
 
 # Step 4: SSH into EC2 and deploy with docker-compose
 echo "Connecting to EC2 instance and deploying images with docker-compose..."
