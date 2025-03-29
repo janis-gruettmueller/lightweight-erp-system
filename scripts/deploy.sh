@@ -47,18 +47,26 @@ echo "Connecting to EC2 instance and deploying images with docker-compose..."
 ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EOF
   cd /home/ubuntu
 
+  echo "Updating system packages..."
+  sudo apt update && sudo apt upgrade -y
+  sudo apt autoremove -y  # Removes unused dependencies
+
   echo "Set correct permissions for .env file..."
-  sudo chmod 644 .env
+  [ -f .env ] && sudo chmod 644 .env
+
+  echo "Stopping old containers..."
+  sudo docker-compose down --remove-orphans
+
+  echo "Removing unused containers, images, volumes and networks..." 
+  sudo docker system prune -f
 
   echo "Pulling latest Docker images..."
   sudo docker-compose pull
 
-  echo "Stopping old containers..."
-  sudo docker-compose down --remove-orphans  # Keeps named volumes intact
-
   echo "Starting new containers..."
   sudo docker-compose up -d
 
+  # rm -f .env
   echo "Deployment completed!"
 EOF
 
