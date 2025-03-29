@@ -17,13 +17,11 @@ services:
   dev-frontend-server:
     build:
       context: ../frontend
-      dockerfile: Dockerfile 
+      dockerfile: Dockerfile
     container_name: leanx-frontend
     restart: unless-stopped
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_SUPABASE_URL=https://iwdpjibascqkzjtkqowq.supabase.co
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZHBqaWJhc2Nxa3pqdGtxb3dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MTk5NjAsImV4cCI6MjA1ODM5NTk2MH0.WYXE5DkQ8exRQQd94X6o43TGcrC6_j34FGEqmxNVeAM
     depends_on:
       - dev-backend-server
       - dev-db-server
@@ -46,6 +44,8 @@ services:
       RDS_MYSQL_USER: devusr
       RDS_MYSQL_PASSWORD: devpassword
       RDS_MYSQL_DB_NAME: leanx_erp_dev
+      SMTP_USERNAME: test.salesup.it@gmail.com
+      SMTP_PASSWORD: kptl ijgp fzzf psxh
     depends_on:
       - dev-db-server
     networks:

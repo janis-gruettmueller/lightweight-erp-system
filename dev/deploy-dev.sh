@@ -12,6 +12,8 @@ echo "Starting development environment..."
 
 # removing old container
 docker-compose down --remove-orphans
+# docker stop leanx-web-server leanx-frontend leanx-backend leanx-db
+# docker rm leanx-web-server leanx-frontend leanx-backend leanx-db
 
 # Build and start the Docker Compose stack
 docker-compose up --build -d

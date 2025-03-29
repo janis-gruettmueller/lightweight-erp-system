@@ -33,6 +33,8 @@ echo "RDS_MYSQL_PORT=${RDS_MYSQL_PORT}" >> $ENV_FILE
 echo "RDS_MYSQL_DB_NAME=${RDS_MYSQL_DB_NAME}" >> $ENV_FILE
 echo "SMTP_USERNAME=${SMTP_USERNAME}" >> $ENV_FILE
 echo "SMTP_PASSWORD=${SMTP_PASSWORD}" >> $ENV_FILE
+echo "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}" >> $ENV_FILE
+echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}" >> $ENV_FILE
 
 # Step 3: Copy .env and docker-compose.yml to EC2
 echo "Copying .env and docker-compose.yml to EC2 instance..."

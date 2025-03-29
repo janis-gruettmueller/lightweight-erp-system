@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// wenn möglich noch anpassen mit .env file
+const supabaseUrl = 'https://iwdpjibascqkzjtkqowq.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZHBqaWJhc2Nxa3pqdGtxb3dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MTk5NjAsImV4cCI6MjA1ODM5NTk2MH0.WYXE5DkQ8exRQQd94X6o43TGcrC6_j34FGEqmxNVeAM';
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // This is a mock implementation. In a real application, you would:
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get('sortBy') || 'publication_date'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20') // Increased default limit
+    const limit = parseInt(searchParams.get('limit') || '20')
 
     let query = supabase
       .from('tenders')
