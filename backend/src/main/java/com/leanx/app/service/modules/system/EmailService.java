@@ -62,9 +62,7 @@ public class EmailService {
                         <li><b>Passwort:</b> %s</li>
                     </ul>
                     <p><b>WICHTIG:</b> Das Passwort läuft in <b>5 Tagen</b> ab! Bitte ändern Sie es rechtzeitig.</p>
-                    <p>Bei Fragen oder Problemen wenden Sie sich bitte direkt an den IT-Support:</p>
-                    <br>
-                    <p>it.support@lean-x.de</p>
+                    <p>Bei Fragen oder Problemen wenden Sie sich bitte direkt an den IT-Support: it.support@lean-x.de</p>
                     <br>
                     <p>Beste Grüße<br>Dein IT-Service-Team<br><b>SalesUP GmbH IT</b></p>
                 </body>
