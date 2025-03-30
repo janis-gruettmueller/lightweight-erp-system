@@ -351,6 +351,23 @@ CREATE VIEW password_history_view AS
 SELECT user_id, password_hash, created_at FROM password_history; 
 
 
+CREATE VIEW user_history_log_view AS
+SELECT
+    uhl.log_id AS Log_id,
+    uhl.user_id AS user_id,
+    u1.name AS user_username,
+    uhl.changed_by AS changed_by,
+    u2.name AS changed_by_username,
+    uhl.changed_at,
+    uhl.field_name,
+    uhl.old_value,
+    uhl.new_value,
+    uhl.description
+FROM user_history_log uhl
+LEFT JOIN users u1 ON uhl.user_id = u1.id
+LEFT JOIN users u2 ON uhl.changed_by = u2.id;
+
+
 /* =============================================================================================== *
  *                                    define database triggers                                     *
  * =============================================================================================== */

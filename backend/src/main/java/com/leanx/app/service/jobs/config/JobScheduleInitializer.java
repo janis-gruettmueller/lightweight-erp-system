@@ -38,7 +38,7 @@ public class JobScheduleInitializer implements ServletContextListener {
                     .withIdentity("onboardingJob", "hr-ops")
                     .build();
 
-            // Define Trigger (Runs every day at 1:00 AM)
+            // Define Trigger (Runs every day at 12:00 PM)
             /* Cron Expressions: 
                 *  *  *  *  *  *  *
                 |  |  |  |  |  |  |-- Year (optional)
@@ -58,7 +58,7 @@ public class JobScheduleInitializer implements ServletContextListener {
             */ 
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("dailyTrigger", "hr-ops")
-                    .withSchedule(CronScheduleBuilder.cronSchedule("0 0 1 * * ?"))
+                    .withSchedule(CronScheduleBuilder.cronSchedule("0 0 12 * * ?"))
                     .build();
 
             // Schedule the job
