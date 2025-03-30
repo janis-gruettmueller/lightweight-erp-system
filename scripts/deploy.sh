@@ -39,7 +39,7 @@ echo "NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}" >> $ENV_FILE
 echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}" >> $ENV_FILE
 
 # Step 3: Copy .env and docker-compose.yml to EC2
-echo "Copying .env and docker-compose.yml to EC2 instance..."
+echo "Copying .env, docker-compose.yml and nginx config files to EC2 instance..."
 scp -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $DOCKER_COMPOSE_FILE $ENV_FILE $NGINX_CONF_FILE $REVERSE_PROXY_CONF_FILE $EC2_USER@$EC2_ELASTIC_IP:/home/ubuntu/
 
 # Step 4: SSH into EC2 and deploy with docker-compose
