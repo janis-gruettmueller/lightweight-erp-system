@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// wenn möglich noch anpassen mit .env file
+const supabaseUrl = 'https://iwdpjibascqkzjtkqowq.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZHBqaWJhc2Nxa3pqdGtxb3dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MTk5NjAsImV4cCI6MjA1ODM5NTk2MH0.WYXE5DkQ8exRQQd94X6o43TGcrC6_j34FGEqmxNVeAM';
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Define valid sort fields and their corresponding database columns

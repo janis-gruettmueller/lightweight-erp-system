@@ -105,6 +105,12 @@ function ChangePasswordClient() {
                 className="border-0 bg-white/5 text-white focus-visible:ring-1 focus-visible:ring-white/30"
                 required
               />
+              <ul className="mt-1 text-xs italic text-gray-500">
+                <li>Mindestpasswortlänge von 12 Zeichen.</li>
+                <li>Muss mindestens einen Großbuchstaben enthalten.</li>
+                <li>Muss mindestens eine Zahl enthalten.</li>
+                <li>Muss mindestens ein Sonderzeichen (!@#$%&*. ) enthalten.</li>
+              </ul>
             </div>
 
             <div className="space-y-2">

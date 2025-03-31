@@ -49,6 +49,9 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_ACCESS_TOKEN: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          
   
   test:
     needs: [build-backend, build-frontend]
@@ -91,5 +94,7 @@ jobs:
           RDS_MYSQL_ENDPOINT: ${{ vars.RDS_MYSQL_ENDPOINT }}
           RDS_MYSQL_PORT: ${{ vars.RDS_MYSQL_PORT }}
           RDS_MYSQL_DB_NAME: ${{ vars.RDS_MYSQL_DB_NAME }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          

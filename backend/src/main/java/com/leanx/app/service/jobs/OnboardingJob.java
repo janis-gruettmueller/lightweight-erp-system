@@ -26,7 +26,6 @@ public class OnboardingJob implements Job {
     private final UserService userService = new UserService();
     private final EmailService emailService = new EmailService();
 
-
     @Override
     public void execute(JobExecutionContext arg0) throws JobExecutionException {
         logger.log(Level.INFO, "Executing Onboarding Job...");
@@ -37,17 +36,28 @@ public class OnboardingJob implements Job {
                 return;
             }
             
+            boolean isEmailSent = true;
             for (Employee employee : newEmployees) {
                 String username = userService.generateUsername(employee.getFirstName(), employee.getLastName());
                 String password = passwordUtils.generatePassword();
                 String passwordHash = passwordUtils.hashPassword(password);
 
                 storedProceduresRepository.callCreateNewUserAccount(username, passwordHash, employee.getId());
-                emailService.sendCredentialsEmail(employee.getEmail(), username, password);
+
+                int sendResult = emailService.attemptSendCredentialsEmail(employee.getEmail(), username, password);
+                if (sendResult != 0) {
+                    logger.log(Level.WARNING, "Failed to send credentials email to {0} after multiple retries.", employee.getEmail());
+                    isEmailSent = false;
+                }
+            }
+
+            if (!isEmailSent) {
+                logger.log(Level.WARNING, "Executed Onboarding Job with errors. {0} new users were created!", newEmployees.size());
+                return;
             }
             logger.log(Level.INFO, "Successfully Executed Onboarding Job. {0} new users were created!", newEmployees.size());
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error accessing the database: {0}", e);
+            logger.log(Level.SEVERE, "Failed to execute the Onboarding Job. Error accessing the database: {0}", e);
         }
     }
 }

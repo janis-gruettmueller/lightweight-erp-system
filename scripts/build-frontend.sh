@@ -7,21 +7,25 @@
 #                                                        #
 # change history:                                        #
 # 24.03.2025 - initial version                           #
+# 29.03.2025 - Added build arguments for Supabase keys   #
 ##########################################################
 
 #!/bin/bash
 set -e  # Exit if any command fails
 
 # Versioning Schema: Major.Minor.Patch
-VERSION="v.1.0.0"
+VERSION="v.1.1.0"
 
 # Docker login
 echo "Logging in to Docker Hub..."
 echo "$DOCKERHUB_ACCESS_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-# Build frontend Docker image 
+# Build frontend Docker image with build arguments
 echo "Building frontend Docker image..."
-docker build --no-cache -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:$VERSION" -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:$VERSION-${GITHUB_SHA::7}" \
+docker build --no-cache \
+    -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:latest" \
+    -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:$VERSION" \
+    -t "$DOCKERHUB_USERNAME/leanx-erp-system-frontend:$VERSION-${GITHUB_SHA::7}" \
     -f frontend/Dockerfile frontend
 
 # Push Docker images to Docker Hub

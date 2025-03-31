@@ -351,6 +351,23 @@ CREATE VIEW password_history_view AS
 SELECT user_id, password_hash, created_at FROM password_history; 
 
 
+CREATE VIEW user_history_log_view AS
+SELECT
+    uhl.log_id AS Log_id,
+    uhl.user_id AS user_id,
+    u1.name AS user_username,
+    uhl.changed_by AS changed_by,
+    u2.name AS changed_by_username,
+    uhl.changed_at,
+    uhl.field_name,
+    uhl.old_value,
+    uhl.new_value,
+    uhl.description
+FROM user_history_log uhl
+LEFT JOIN users u1 ON uhl.user_id = u1.id
+LEFT JOIN users u2 ON uhl.changed_by = u2.id;
+
+
 /* =============================================================================================== *
  *                                    define database triggers                                     *
  * =============================================================================================== */
@@ -605,7 +622,6 @@ CREATE PROCEDURE DeactivateUserAccount (
     COMMIT;
 END $$
 
-
 -- procedure for automated creation of normal user account 
 
 CREATE PROCEDURE CreateNewUserAccount (
@@ -618,7 +634,7 @@ CREATE PROCEDURE CreateNewUserAccount (
     START TRANSACTION;
     
     INSERT INTO users (name, password_hash, password_expiry_date, created_by)
-    VALUES (username_param, password_hash_param, DATE_ADD(CURDATE(), INTERVAL 5 DAY), 1);
+    VALUES (username_param, password_hash_param, DATE_ADD(CURDATE(), INTERVAL 5 DAY), 2);
 
     SET user_id = LAST_INSERT_ID();
 
@@ -812,6 +828,10 @@ VALUES
 -- password: "initERP@2025" hashed with BCrypt (it is strongly recommended to lock the user following the initial setup!)
 INSERT INTO users (name, status, type, password_hash, is_first_login, password_expiry_date, created_by) 
 VALUES ('DEFAULT_USR', 'ACTIVE', 'SUPER', '$2a$10$Z6v/1IM1G2x6e47i1HnhvuWAmNgTETU7RiYzc4kRxu7LdNy1.PARu', false, null, 1);
+
+-- self assign SYS_SETUP user the SYSTEM_USER role
+INSERT INTO user_roles (user_id, role_id, created_by) 
+VALUES (1, 2, 1);
 
 -- give SYS_ user the SYSTEM_USER role
 INSERT INTO user_roles (user_id, role_id, created_by) 

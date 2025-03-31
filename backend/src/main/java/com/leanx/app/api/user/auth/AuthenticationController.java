@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.leanx.app.service.modules.system.configs.SecurityConfig;
 import com.leanx.app.service.modules.user.admin.UserService;
 import com.leanx.app.service.modules.user.auth.AuthenticationService;
+import com.leanx.app.service.modules.user.auth.exceptions.AccountDeactivatedException;
 import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;
 import com.leanx.app.service.modules.user.auth.exceptions.FirstLoginException;
 import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredException;
@@ -143,7 +144,7 @@ public class AuthenticationController extends HttpServlet {
 
             // Send the temporary token in the JSON response
             ApiUtils.sendJsonResponse(response, Map.of("tempToken", tempToken, "reason", e.getMessage()));
-        } catch (AccountLockedException e) {
+        } catch (AccountLockedException | AccountDeactivatedException e) {
             ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
     }
@@ -217,14 +218,14 @@ public class AuthenticationController extends HttpServlet {
 
             boolean success = authService.changePassword(userId, userId, newPassword, confirmNewPassword);
             if (!success) {
-                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "New password does not meet security requirements. Failed to update password!");
+                ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to update password!");
                 return;
             }
 
             session.invalidate();
             ApiUtils.sendJsonResponse(response, "Password changed successfully!");
         } catch (IllegalArgumentException e) {
-            ApiUtils.sendExceptionResponse(response, e.getMessage(), e);
+            ApiUtils.sendErrorResponse(response, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
         } catch (SQLException e) {
             ApiUtils.sendExceptionResponse(response, null, e);
         } catch (SecurityException e) {

@@ -5,13 +5,17 @@ services:
     restart: unless-stopped 
     ports:
       - "80:80" 
+      - "443:443"
     depends_on:
       - backend-server
       - frontend-server
     networks:
       - leanx_network
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf  # Mount custom Nginx config
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./reverse-proxy.conf:/etc/nginx/conf.d/leanx.conf:ro
+      - /etc/letsencrypt/live/lean-x.de:/etc/letsencrypt/live/lean-x.de:ro
+      - /etc/letsencrypt/archive/lean-x.de:/etc/letsencrypt/archive/lean-x.de:ro
 
   frontend-server:  # Next.js App (Internal only)
     image: ${DOCKERHUB_USERNAME}/leanx-erp-system-frontend:latest
@@ -38,6 +42,7 @@ services:
       RDS_MYSQL_DB_NAME: ${RDS_MYSQL_DB_NAME}
       SMTP_USERNAME: ${SMTP_USERNAME}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_HOST: ${SMTP_HOST}
     networks:
       - leanx_network
     expose:

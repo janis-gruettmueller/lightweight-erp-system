@@ -6,6 +6,10 @@ secrets
 
 .idea
 
+dev/.env
+
+scripts/database/onboarding.sql
+
 backend/src/main/java/com/leanx/app/service/EmailService.java
 backend/src/main/java/com/leanx/app/service/jobs/BackupDatabaseJob.java
 backend/src/main/java/com/leanx/app/service/jobs/OffboardingJob.java
