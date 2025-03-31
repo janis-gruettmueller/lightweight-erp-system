@@ -10,7 +10,7 @@ interface TenderCardProps {
 
 export function TenderCard({ tender, onBookmark }: TenderCardProps) {
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow border border-black">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-lg">{tender.title}</CardTitle>
         <Button

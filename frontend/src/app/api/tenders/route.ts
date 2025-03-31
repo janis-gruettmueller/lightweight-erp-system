@@ -5,6 +5,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Define valid sort fields and their corresponding database columns
+const VALID_SORT_FIELDS = {
+  deadline: 'deadline'
+} as const
+
 // This is a mock implementation. In a real application, you would:
 // 1. Connect to your database
 // 2. Implement proper filtering and pagination
@@ -14,12 +19,25 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const category = searchParams.get('category')
-    const region = searchParams.get('region')
-    const status = searchParams.get('status')
-    const sortBy = searchParams.get('sortBy') || 'publication_date'
-    const sortOrder = searchParams.get('sortOrder') || 'desc'
+    const sortBy = searchParams.get('sortBy') || 'deadline'
+    const sortOrder = searchParams.get('sortOrder') || 'asc'
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20') // Increased default limit
+    const limit = parseInt(searchParams.get('limit') || '20')
+
+    // Validate sort parameters
+    if (!Object.values(VALID_SORT_FIELDS).includes(sortBy as any)) {
+      return new Response(JSON.stringify({ error: 'Invalid sort field' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!['asc', 'desc'].includes(sortOrder.toLowerCase())) {
+      return new Response(JSON.stringify({ error: 'Invalid sort order' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
 
     let query = supabase
       .from('tenders')
@@ -29,17 +47,20 @@ export async function GET(request: Request) {
     if (search && search.trim() !== '') {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
     }
-    if (category && category !== 'all') {
-      query = query.eq('category', category)
-    }
-    if (region && region !== 'all') {
-      query = query.eq('region', region)
-    }
-    if (status && status !== 'all') {
-      query = query.eq('status', status)
+    if (category) {
+      // Use exact matching for categories
+      query = query.eq('category', category === 'it' ? 'IT' : 
+        category === 'it_digitalisierung' ? 'IT & Digitalisierung' :
+        category === 'bauarbeiten' ? 'Bauarbeiten' :
+        category === 'dienstleistungen' ? 'Dienstleistungen' :
+        category === 'facility_management' ? 'Facility Management' :
+        category === 'infrastruktur' ? 'Infrastruktur' :
+        category === 'lieferungen' ? 'Lieferungen' :
+        category === 'planung_beratung' ? 'Planung & Beratung' :
+        category)
     }
 
-    // Apply sorting
+    // Apply sorting with validated fields
     query = query.order(sortBy, { ascending: sortOrder === 'asc' })
 
     // Apply pagination
@@ -49,21 +70,25 @@ export async function GET(request: Request) {
     const { data: tenders, error, count } = await query
 
     if (error) {
-      throw error
+      console.error('Database error:', error)
+      return NextResponse.json(
+        { error: 'Database error occurred' },
+        { status: 500 }
+      )
     }
 
-    // Get unique categories and regions for filters
+    // Get unique categories for filters
     const { data: categories } = await supabase
       .from('tenders')
       .select('category')
       .not('category', 'is', null)
       .order('category')
 
-    const { data: regions } = await supabase
+    // Get total IT tenders count
+    const { count: itCount } = await supabase
       .from('tenders')
-      .select('region')
-      .not('region', 'is', null)
-      .order('region')
+      .select('*', { count: 'exact' })
+      .in('category', ['IT', 'IT & Digitalisierung'])
 
     return NextResponse.json({
       tenders,
@@ -71,9 +96,9 @@ export async function GET(request: Request) {
       page,
       totalPages: Math.ceil((count || 0) / limit),
       limit,
+      totalITTenders: itCount,
       filters: {
-        categories: [...new Set(categories?.map(c => c.category) || [])],
-        regions: [...new Set(regions?.map(r => r.region) || [])]
+        categories: [...new Set(categories?.map(c => c.category) || [])]
       }
     })
   } catch (error) {

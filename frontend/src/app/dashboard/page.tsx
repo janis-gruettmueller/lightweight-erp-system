@@ -67,11 +67,11 @@ function SearchParamsComponent() {
   ]
 
   const salaryData = [
-    { department: 'Beratung', salary: 65000, employees: 42 },
-    { department: 'Marketing', salary: 55000, employees: 28 },
-    { department: 'Vertrieb', salary: 60000, employees: 35 },
-    { department: 'HR', salary: 52000, employees: 15 },
-    { department: 'Finanzen', salary: 63000, employees: 20 },
+    { department: 'Beratung', salary: 65000, employees: 10 },
+    { department: 'Marketing', salary: 55000, employees: 1 },
+    { department: 'Vertrieb', salary: 60000, employees: 1 },
+    { department: 'HR', salary: 52000, employees: 2 },
+    { department: 'Finanzen', salary: 63000, employees: 1 },
   ]
 
   const salesData = [
@@ -132,7 +132,7 @@ function SearchParamsComponent() {
                       <LineChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">45,231.89€</div>
+                      <div className="text-2xl font-bold">155,231.89€</div>
                       <p className="text-xs text-muted-foreground">+20.1% mehr als letzten Monat</p>
                       <div className="h-[80px] w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
@@ -157,7 +157,7 @@ function SearchParamsComponent() {
                       <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">12</div>
+                      <div className="text-2xl font-bold">15</div>
                       <p className="text-xs text-muted-foreground">+180 mehr als letzten Monat</p>
                       <div className="h-[80px] w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
