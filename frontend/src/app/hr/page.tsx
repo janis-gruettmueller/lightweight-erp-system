@@ -96,8 +96,8 @@ export default withAuth(function HRPage() {
                 </CardHeader>
                 <CardContent>
                   {[
-                    { dept: 'Beratung', count: 7, percent: 70 },
-                    { dept: 'Finanzen', count: 2, percent: 20 },
+                    { dept: 'Beratung', count: 10, percent: 80 },
+                    { dept: 'Finanzen', count: 1, percent: 10 },
                     { dept: 'Vertrieb', count: 1, percent: 10 }
                   ].map((dept, i) => (
                     <div key={i} className="mb-4">
@@ -126,7 +126,7 @@ export default withAuth(function HRPage() {
                     {[
                       { name: 'Max Mustermann', role: 'Student', dept: 'Vertrieb' },
                       { name: 'Anna Schmidt', role: 'Marketing Manager', dept: 'Marketing' },
-                      { name: 'Sven Drescher', role: 'Kaffee bringer', dept: 'Unterhaltung' }
+                      { name: 'Sven Drescher', role: 'Praktikant', dept: 'Unterhaltung' }
                     ].map((emp, i) => (
                       <div key={i} className="flex items-center space-x-4 p-2 hover:bg-gray-50 rounded-md">
                         <Avatar>
@@ -231,9 +231,9 @@ export default withAuth(function HRPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { course: 'Führungskräfte Training', participants: 15, progress: 60 },
-                      { course: 'Agile Methodiken', participants: 25, progress: 40 },
-                      { course: 'Datenschutz Basics', participants: 50, progress: 80 }
+                      { course: 'Führungskräfte Training', participants: 1, progress: 5 },
+                      { course: 'Agile Methodiken', participants: 8, progress: 70 },
+                      { course: 'Datenschutz Basics', participants: 3, progress: 25 }
                     ].map((course, i) => (
                       <div key={i} className="space-y-2">
                         <div className="flex justify-between">
@@ -262,9 +262,9 @@ export default withAuth(function HRPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {[
-                      { cert: 'Scrum Master', count: 12, target: 15 },
-                      { cert: 'AWS Certified', count: 8, target: 10 },
-                      { cert: 'ISO 27001', count: 5, target: 5 }
+                      { cert: 'Scrum Master', count: 10, target: 12 },
+                      { cert: 'AWS Certified', count: 8, target: 8 },
+                      { cert: 'ISO 27001', count: 2, target: 3 }
                     ].map((cert, i) => (
                       <div key={i} className="flex items-center justify-between p-2">
                         <div>

@@ -6,7 +6,7 @@ import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, Bell, Bookmark, Filter, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react"
+import { Search, Bell, Bookmark, Filter, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, RefreshCw } from "lucide-react"
 import { TenderCard } from "@/components/tenders/tender-card"
 import { Tender, TenderFilters } from "@/types/tender"
 import {
@@ -23,13 +23,17 @@ export default withAuth(function SalesPage() {
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<TenderFilters>({})
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("publication_date")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [sortBy, setSortBy] = useState("deadline")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalTenders, setTotalTenders] = useState(0)
+  const [totalITTenders, setTotalITTenders] = useState(0)
   const [availableCategories, setAvailableCategories] = useState<string[]>([])
-  const [availableRegions, setAvailableRegions] = useState<string[]>([])
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  // Update default sort value to use deadline
+  const defaultSortValue = "deadline_asc"
 
   useEffect(() => {
     fetchTenders()
@@ -42,30 +46,38 @@ export default withAuth(function SalesPage() {
       const queryParams = new URLSearchParams()
       if (filters.search) queryParams.append('search', filters.search)
       if (filters.category) queryParams.append('category', filters.category)
-      if (filters.region) queryParams.append('region', filters.region)
-      if (filters.status) queryParams.append('status', filters.status)
-      queryParams.append('sortBy', sortBy)
-      queryParams.append('sortOrder', sortOrder)
+      queryParams.append('sortBy', sortBy || 'deadline')
+      queryParams.append('sortOrder', sortOrder || 'asc')
       queryParams.append('page', page.toString())
-      queryParams.append('limit', '20') // Increased limit
+      queryParams.append('limit', '20')
 
       const response = await fetch(`/api/tenders?${queryParams.toString()}`)
       if (!response.ok) {
-        throw new Error('Failed to fetch tenders')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch tenders')
       }
       const data = await response.json()
       setTenders(data.tenders || [])
       setTotalPages(data.totalPages)
       setTotalTenders(data.total)
+      setTotalITTenders(data.totalITTenders || 0)
       if (data.filters) {
         setAvailableCategories(data.filters.categories)
-        setAvailableRegions(data.filters.regions)
       }
     } catch (error) {
       console.error('Error fetching tenders:', error)
       setError('Failed to load tenders. Please try again later.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSync = async () => {
+    try {
+      setIsSyncing(true)
+      await fetchTenders()
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -103,7 +115,17 @@ export default withAuth(function SalesPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="border border-black">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Gesamtausschreibungen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {totalTenders}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-black">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Neue Ausschreibungen</CardTitle>
               </CardHeader>
@@ -113,39 +135,30 @@ export default withAuth(function SalesPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-black">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Aktive Ausschreibungen</CardTitle>
+                <CardTitle className="text-sm font-medium">IT-Ausschreibungen</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {tenders.filter(t => t.status === 'active').length}
+                  {totalITTenders}
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-black bg-gray-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Gesamtvolumen</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Bestandskunden Ausschreibungen</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {tenders.reduce((sum, t) => sum + (t.estimatedValue || 0), 0).toLocaleString()}€
+                <div className="text-2xl font-bold text-gray-700">
+                  4
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Durchschnittlicher Wert</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {Math.round(tenders.reduce((sum, t) => sum + (t.estimatedValue || 0), 0) / (tenders.length || 1)).toLocaleString()}€
-                </div>
+                
               </CardContent>
             </Card>
           </div>
 
-          <form onSubmit={handleSearch} className="flex items-center space-x-2">
+          <form onSubmit={handleSearch} className="flex items-center space-x-2 border border-black p-4 rounded-lg">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input 
@@ -159,73 +172,60 @@ export default withAuth(function SalesPage() {
               value={filters.category || "all"}
               onValueChange={(value) => setFilters(prev => ({ ...prev, category: value === "all" ? undefined : value }))}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Kategorie" />
+              <SelectTrigger className="min-w-[180px]">
+                <div className="flex flex-col items-start">
+                  <span className="text-xs text-muted-foreground">Kategorien</span>
+                  <SelectValue defaultValue="all">Alle Kategorien</SelectValue>
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Kategorien</SelectItem>
-                {availableCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
+                <SelectItem value="bauarbeiten">Bauarbeiten</SelectItem>
+                <SelectItem value="dienstleistungen">Dienstleistungen</SelectItem>
+                <SelectItem value="facility_management">Facility Management</SelectItem>
+                <SelectItem value="infrastruktur">Infrastruktur</SelectItem>
+                <SelectItem value="it">IT</SelectItem>
+                <SelectItem value="it_digitalisierung">IT & Digitalisierung</SelectItem>
+                <SelectItem value="lieferungen">Lieferungen</SelectItem>
+                <SelectItem value="planung_beratung">Planung & Beratung</SelectItem>
               </SelectContent>
             </Select>
             <Select
-              value={filters.region || "all"}
-              onValueChange={(value) => setFilters(prev => ({ ...prev, region: value === "all" ? undefined : value }))}
+              value={`${sortBy}_${sortOrder}`}
+              onValueChange={(value) => {
+                const [field, order] = value.split('_')
+                setSortBy(field)
+                setSortOrder(order as 'asc' | 'desc')
+              }}
+              defaultValue={defaultSortValue}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Region" />
+              <SelectTrigger className="min-w-[180px]">
+                <div className="flex flex-col items-start">
+                  <span className="text-xs text-muted-foreground">Sortierung</span>
+                  <SelectValue>Sortieren</SelectValue>
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Regionen</SelectItem>
-                {availableRegions.map((region) => (
-                  <SelectItem key={region} value={region}>
-                    {region}
-                  </SelectItem>
-                ))}
+                <SelectItem value="deadline_asc">Frist (Nächste)</SelectItem>
+                <SelectItem value="deadline_desc">Frist (Späteste)</SelectItem>
+                <SelectItem value="estimated_value_desc" disabled className="text-gray-400 cursor-not-allowed">
+                  Geschätzter Wert (Höchste) 
+                </SelectItem>
+                <SelectItem value="estimated_value_asc" disabled className="text-gray-400 cursor-not-allowed">
+                  Geschätzter Wert (Niedrigste) 
+                </SelectItem>
               </SelectContent>
             </Select>
-            <Select
-              value={filters.status || "all"}
-              onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === "all" ? undefined : value as Tender['status'] }))}
+            <Button 
+              type="button" 
+              className="bg-black text-white"
+              onClick={handleSync}
+              disabled={isSyncing}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="new">Neu</SelectItem>
-                <SelectItem value="active">Aktiv</SelectItem>
-                <SelectItem value="closed">Geschlossen</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={sortBy}
-              onValueChange={(value) => setSortBy(value)}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sortieren nach" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="publication_date">Veröffentlichungsdatum</SelectItem>
-                <SelectItem value="deadline">Frist</SelectItem>
-                <SelectItem value="estimated_value">Geschätzter Wert</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-            >
-              {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Synchronisiere...' : 'Synchronisieren'}
             </Button>
-            <Button type="submit">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
-            </Button>
-            {(filters.search || filters.category || filters.region || filters.status) && (
+            {(filters.search || filters.category) && (
               <Button
                 type="button"
                 variant="outline"
@@ -237,13 +237,13 @@ export default withAuth(function SalesPage() {
           </form>
 
           {error && (
-            <div className="bg-red-50 text-red-500 p-4 rounded-md">
+            <div className="bg-red-50 text-red-500 p-4 rounded-md border border-black">
               {error}
             </div>
           )}
 
           {loading ? (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-64 border border-black rounded-lg">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
@@ -258,7 +258,7 @@ export default withAuth(function SalesPage() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between mt-4 border border-black p-4 rounded-lg">
                 <div className="text-sm text-muted-foreground">
                   Zeige {tenders.length} von {totalTenders} Ausschreibungen
                 </div>
