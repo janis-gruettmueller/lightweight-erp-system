@@ -21,7 +21,41 @@ public class EmailService {
     private final String smtpUsername = System.getenv("SMTP_USERNAME");
     private final String smtpPassword = System.getenv("SMTP_PASSWORD");
 
-    public void sendCredentialsEmail(String to, String username, String password) {
+    private static final int MAX_RETRIES = 3; // Maximum number of retry attempts
+    private static final long BACKOFF_DELAY = 60000; // 1 minute in milliseconds
+
+    public int attemptSendCredentialsEmail(String to, String username, String password) {
+        int retryCount = 0;
+
+        while (retryCount < MAX_RETRIES) {
+            try {
+                sendCredentialsEmail(to, username, password);
+                logger.log(Level.INFO, "Email successfully sent to: {0} after {1} retries.", new Object[]{to, retryCount});
+                return 0; // Email sent successfully, exit the retry loop
+            } catch (MessagingException e) {
+                logger.log(Level.SEVERE, "Failed to send email to " + to + ", attempt " + (retryCount + 1) + ": " + e.getMessage(), e);
+                retryCount++;
+
+                if (retryCount < MAX_RETRIES) {
+                    logger.log(Level.WARNING, "Retrying email to {0} in {1} milliseconds...", new Object[]{to, BACKOFF_DELAY});
+                    try {
+                        Thread.sleep(BACKOFF_DELAY);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        logger.log(Level.WARNING, "Retry sleep interrupted.");
+                        return -1;
+                    }
+                } else {
+                    logger.log(Level.SEVERE, "Failed to send email to {0} after {1} retries. Giving up.", new Object[]{to, MAX_RETRIES});
+                    return -1;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private void sendCredentialsEmail(String to, String username, String password) throws MessagingException {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
@@ -73,9 +107,8 @@ public class EmailService {
             message.setContent(messageBody, "text/html; charset=utf-8");
 
             jakarta.mail.Transport.send(message);
-            logger.log(Level.INFO, "Email successfully sent to: {0}", to);
         } catch (MessagingException e) {
-            logger.log(Level.SEVERE, "Failed to send email to " + to, e);
+            throw e;
         }
     }
 }

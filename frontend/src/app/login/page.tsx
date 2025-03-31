@@ -183,7 +183,7 @@ export default function LoginPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        © {new Date().getFullYear()} LeanX-ERP GmbH
+        © {new Date().getFullYear()} LeanX-ERP
       </motion.div>
     </div>
   )

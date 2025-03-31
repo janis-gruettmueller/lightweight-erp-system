@@ -51,9 +51,6 @@ ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EO
   sudo apt update && sudo apt upgrade -y
   sudo apt autoremove -y  # Removes unused dependencies
 
-  echo "Set correct permissions for .env file..."
-  [ -f .env ] && sudo chmod 644 .env
-
   echo "Stopping old containers..."
   sudo docker-compose down --remove-orphans
 
@@ -62,6 +59,9 @@ ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EO
 
   echo "Pulling latest Docker images..."
   sudo docker-compose pull
+
+  echo "Set correct permissions for .env file..."
+  [ -f .env ] && sudo chmod 644 .env
 
   echo "Starting new containers..."
   sudo docker-compose up -d
