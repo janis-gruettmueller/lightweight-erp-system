@@ -19,13 +19,14 @@ import {
   Cell,
   AreaChart,
   Area,
-  Legend
+  Legend,
 } from 'recharts'
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+
 
 // Create SearchParamsComponent as a top-level component
 function SearchParamsComponent() {
@@ -529,15 +530,15 @@ function SearchParamsComponent() {
                                   <XAxis dataKey="year" />
                                   <YAxis 
                                     yAxisId="left"
-                                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
+                                    tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k€`}
                                   />
                                   <YAxis 
                                     yAxisId="right"
                                     orientation="right"
-                                    tickFormatter={(value) => `${value} Monate`}
+                                    tickFormatter={(value: any) => `${value} Monate`}
                                   />
                                   <Tooltip 
-                                    formatter={(value, name) => {
+                                    formatter={(value: number, name: string) => {
                                       if (name === 'Budget') return `${(value / 1000).toFixed(0)}k€`;
                                       if (name === 'Dauer') return `${value} Monate`;
                                       return value;
@@ -614,11 +615,11 @@ function SearchParamsComponent() {
                                       <Cell key={`cell-${index}`} fill={color} />
                                     ))}
                                   </Pie>
-                                  <Tooltip 
-                                    formatter={(value, name, props) => [
-                                      `${value}%`,
-                                      `${name} (${props.payload.description})`
-                                    ]}
+                                  <Tooltip
+                                    formatter={(value: any, name: any, props: any) => {
+                                      const description = props.payload?.[0]?.payload?.description ?? "N/A";
+                                      return [`${value}%`, `${name} (${description})`];
+                                    }}
                                   />
                                 </RechartsPieChart>
                               </ResponsiveContainer>
