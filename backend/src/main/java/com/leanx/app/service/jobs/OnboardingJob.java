@@ -57,7 +57,7 @@ public class OnboardingJob implements Job {
             }
             logger.log(Level.INFO, "Successfully Executed Onboarding Job. {0} new users were created!", newEmployees.size());
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error accessing the database: {0}", e);
+            logger.log(Level.SEVERE, "Failed to execute the Onboarding Job. Error accessing the database: {0}", e);
         }
     }
 }

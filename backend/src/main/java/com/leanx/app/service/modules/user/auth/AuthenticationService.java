@@ -11,6 +11,7 @@ import com.leanx.app.model.entity.User.UserStatus;
 import com.leanx.app.repository.PasswordHistoryViewRepository;
 import com.leanx.app.repository.base.ViewRepository;
 import com.leanx.app.service.modules.user.admin.UserService;
+import com.leanx.app.service.modules.user.auth.exceptions.AccountDeactivatedException;
 import com.leanx.app.service.modules.user.auth.exceptions.AccountLockedException;
 import com.leanx.app.service.modules.user.auth.exceptions.FirstLoginException;
 import com.leanx.app.service.modules.user.auth.exceptions.PasswordExpiredException;
@@ -49,14 +50,27 @@ public class AuthenticationService {
      * @throws AccountLockedException  If the user's account is locked.
      * @throws PasswordExpiredException If the user's password has expired.
      * @throws FirstLoginException      If the user needs to change their password before first login.
+     * @throws AccountDeactivatedException If the user's account is deactivated.
      */
-    public int authenticate(String username, String password) throws AccountLockedException, PasswordExpiredException, FirstLoginException {
+    public int authenticate(String username, String password) throws AccountLockedException, PasswordExpiredException, FirstLoginException, AccountDeactivatedException {
         try {
             User user = userService.getUserByIdentifier(username);
 
             if (user == null) {
                 logger.log(Level.WARNING, "Failed to find user with username: {0}", username);
                 return -1;
+            }
+
+            /* 
+             * if (user.getValidUntil() != null && user.getValidUntil().before(new Date(System.currentTimeMillis()))) {
+             *      logger.log(Level.WARNING, "Failed login attempt due to user account being expired: {0}", username);
+             *      throw new AccountExpiredException("Authentication Failed. The account is expired. Please contact support for further questions.");
+             * }
+             */
+
+            if (user.getStatus() == UserStatus.DEACTIVATED) {
+                logger.log(Level.WARNING, "Failed login attempt due to user account being deactivated: {0}", username);
+                throw new AccountDeactivatedException("Authentication failed. The account does not exist anymore. Please contact support for further information.");
             }
 
             if (user.getStatus() == UserStatus.LOCKED) {

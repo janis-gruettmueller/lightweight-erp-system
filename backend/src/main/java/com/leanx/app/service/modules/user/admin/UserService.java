@@ -144,38 +144,39 @@ public final class UserService {
         }
     }
 
-    public String generateUsername(String firstName, String lastName) throws SQLException {
+    public String generateUsername(String firstName, String lastName) {
         int maxLength = 7;
+
+        String normalizedFirstName = firstName.toLowerCase(Locale.GERMAN)
+            .replace(" ", "")
+            .replace("-", "")
+            .replace("ä", "ae")
+            .replace("ü", "ue")
+            .replace("ö", "oe");
+        String normalizedLastName = lastName.toLowerCase(Locale.GERMAN)
+            .replace(" ", "")
+            .replace("ä", "ae")
+            .replace("ü", "ue")
+            .replace("ö", "oe");
+
+        String baseUsername = normalizedFirstName.substring(0, 1) + normalizedLastName;
+        String username = baseUsername;
+        if (username.length() > maxLength) {
+            username = username.substring(0, maxLength);
+        }
+
+        int counter = 1;
+        
         try {
-            String normalizedFirstName = firstName.toLowerCase(Locale.GERMAN)
-                .replace(" ", "")
-                .replace("-", "")
-                .replace("ä", "ae")
-                .replace("ü", "ue")
-                .replace("ö", "oe");
-            String normalizedLastName = lastName.toLowerCase(Locale.GERMAN)
-                .replace(" ", "")
-                .replace("ä", "ae")
-                .replace("ü", "ue")
-                .replace("ö", "oe");
-
-            String baseUsername = normalizedFirstName.substring(0, 1) + normalizedLastName;
-            String username = baseUsername;
-            if (username.length() > maxLength) {
-                username = username.substring(0, maxLength);
-            }
-
-            int counter = 1;
             while (getUserId(username) != -1) {
                 username = baseUsername + counter;
                 counter++;
             }
-            
-            return username;
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error accessing the database: {0}", e);
-            throw e;
+            // expected condition
         }
+        
+        return username;
     }
 
     public boolean deactivateUser(Integer userId, Integer currentUserId) throws IllegalArgumentException {

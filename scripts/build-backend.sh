@@ -13,7 +13,7 @@
 set -e  # Exit if any command fails
 
 # Versioning Schema: Major.Minor.Patch
-VERSION="v.1.0.0"
+VERSION="v.1.0.1"
 
 # Build backend with Maven
 echo "Building backend with Maven..."

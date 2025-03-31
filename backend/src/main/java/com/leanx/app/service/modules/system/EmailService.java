@@ -26,33 +26,39 @@ public class EmailService {
 
     public int attemptSendCredentialsEmail(String to, String username, String password) {
         int retryCount = 0;
-
+    
         while (retryCount < MAX_RETRIES) {
             try {
                 sendCredentialsEmail(to, username, password);
-                logger.log(Level.INFO, "Email successfully sent to: {0} after {1} retries.", new Object[]{to, retryCount});
-                return 0; // Email sent successfully, exit the retry loop
+                logger.log(Level.INFO, "Email successfully sent to {0} after {1} retries.", new Object[]{to, retryCount});
+                return 0; // Success
             } catch (MessagingException e) {
-                logger.log(Level.SEVERE, "Failed to send email to " + to + ", attempt " + (retryCount + 1) + ": " + e.getMessage(), e);
                 retryCount++;
-
+                logger.log(Level.SEVERE, "Attempt {0} - Failed to send email to {1}: {2}", new Object[]{retryCount, to, e.getMessage(), e});
+    
                 if (retryCount < MAX_RETRIES) {
-                    logger.log(Level.WARNING, "Retrying email to {0} in {1} milliseconds...", new Object[]{to, BACKOFF_DELAY});
-                    try {
-                        Thread.sleep(BACKOFF_DELAY);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        logger.log(Level.WARNING, "Retry sleep interrupted.");
-                        return -1;
+                    if (!sleepBeforeRetry()) {
+                        return -1; // Interrupted, exit early
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Failed to send email to {0} after {1} retries. Giving up.", new Object[]{to, MAX_RETRIES});
+                    logger.log(Level.SEVERE, "Giving up after {0} attempts to send email to {1}.", new Object[]{MAX_RETRIES, to});
                     return -1;
                 }
             }
         }
-
         return -1;
+    }
+    
+    private boolean sleepBeforeRetry() {
+        try {
+            logger.log(Level.WARNING, "Retrying in {0} milliseconds...", BACKOFF_DELAY);
+            Thread.sleep(BACKOFF_DELAY);
+            return true;
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            logger.log(Level.WARNING, "Retry sleep interrupted. Aborting retries.");
+            return false;
+        }
     }
 
     private void sendCredentialsEmail(String to, String username, String password) throws MessagingException {
