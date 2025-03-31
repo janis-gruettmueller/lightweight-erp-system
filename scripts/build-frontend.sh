@@ -14,7 +14,7 @@
 set -e  # Exit if any command fails
 
 # Versioning Schema: Major.Minor.Patch
-VERSION="v.1.1.0"
+VERSION="v.1.2.0"
 
 # Docker login
 echo "Logging in to Docker Hub..."

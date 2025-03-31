@@ -44,6 +44,9 @@ ssh -i $EC2_SSH_KEY $EC2_USER@$EC2_ELASTIC_IP <<EOF
     sudo docker-compose --version
     echo "Docker and Docker Compose installed successfully!"
 
+    # Add user to docker group
+    sudo usermod -aG docker ubuntu
+
     # Setup automated Docker cleanup cronjob
     echo "Setting up automated Docker cleanup cronjob (daily at 3:00 AM UTC)..."
     (crontab -l 2>/dev/null; echo "0 3 * * * sudo docker system prune --filter \"until=24h\" -f") | crontab -

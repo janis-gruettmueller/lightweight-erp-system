@@ -2,29 +2,42 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ComponentType } from 'react';
 
-const withAuth = (WrappedComponent: React.ComponentType) => {
-  return function WithAuthComponent(props: any) {
-    // Temporarily disabled auth check
-    return <WrappedComponent {...props} />;
+interface AuthProps {}
 
-    // Original code (commented out for now)
-    /*
+function withAuth<P extends object>(WrappedComponent: ComponentType<P>) {
+  return (props: P & AuthProps) => {
     const router = useRouter();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
     useEffect(() => {
-      // Check if user is authenticated
-      const isAuthenticated = localStorage.getItem('isAuthenticated');
-      
-      if (!isAuthenticated) {
-        router.push('/login');
-      }
+      const checkAuth = async () => {
+        try {
+          const response = await fetch('/api/auth/session');
+          if (response.ok) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+            router.push('/login');
+          }
+        } catch (error) {
+          console.error("Error checking auth:", error);
+          setIsAuthenticated(false);
+          router.push('/login');
+        }
+      };
+
+      checkAuth();
     }, [router]);
 
+    if (isAuthenticated === false) {
+      return null;
+    }
+
     return <WrappedComponent {...props} />;
-    */
   };
-};
+}
 
 export default withAuth;
