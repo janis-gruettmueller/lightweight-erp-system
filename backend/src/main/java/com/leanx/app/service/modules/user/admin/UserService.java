@@ -160,13 +160,12 @@ public final class UserService {
             .replace("ö", "oe");
 
         String baseUsername = normalizedFirstName.substring(0, 1) + normalizedLastName;
-        String username = baseUsername;
-        if (username.length() > maxLength) {
-            username = username.substring(0, maxLength);
+        if (baseUsername.length() > maxLength) {
+            baseUsername = baseUsername.substring(0, maxLength);
         }
-
-        int counter = 1;
         
+        String username = baseUsername;
+        int counter = 1;
         try {
             while (getUserId(username) != -1) {
                 username = baseUsername + counter;

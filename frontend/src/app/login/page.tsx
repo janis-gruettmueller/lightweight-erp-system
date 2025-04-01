@@ -183,7 +183,18 @@ export default function LoginPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        © {new Date().getFullYear()} LeanX-ERP
+        <strong>Rechtlicher Hinweis (Legal Notice)</strong><br />
+        Diese Webanwendung ist ein studentisches Projekt im Rahmen des Studiums<br />
+        an der Hochschule für Wirtschaft und Recht (HWR) Berlin.<br />  
+        <br />  
+        Es handelt sich um eine nicht-kommerzielle Anwendung, die ausschließlich zu Lernzwecken entwickelt wurde.<br />
+        Diese Webseite steht in keiner Verbindung zu kommerziellen Anbietern mit ähnlichen Namen oder Produkten.<br />
+        Alle Markennamen und Logos sind Eigentum der jeweiligen Rechteinhaber.<br />
+        <br />
+        Bei Fragen oder Anliegen wenden Sie sich bitte an die Verantwortlichen dieses Projekts<br />
+        (s_gruettmueller22@stud.hwr-berlin.de; s_kania22@stud.hwr-berlin.de).<br />
+        <br />
+        &copy; {new Date().getFullYear()} HWR-Berlin
       </motion.div>
     </div>
   )
