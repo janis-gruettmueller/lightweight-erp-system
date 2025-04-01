@@ -19,14 +19,13 @@ import {
   Cell,
   AreaChart,
   Area,
-  Legend,
+  Legend
 } from 'recharts'
 import DashboardLayout from "@/components/dashboard/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-
 
 // Create SearchParamsComponent as a top-level component
 function SearchParamsComponent() {
@@ -88,12 +87,12 @@ function SearchParamsComponent() {
 
   // Add the missing financeData
   const financeData = [
-    { month: 'Jan', revenue: 4000, expenses: 2400 },
-    { month: 'Feb', revenue: 3000, expenses: 1398 },
-    { month: 'Mar', revenue: 2000, expenses: 9800 },
-    { month: 'Apr', revenue: 2780, expenses: 3908 },
-    { month: 'May', revenue: 1890, expenses: 4800 },
-    { month: 'Jun', revenue: 2390, expenses: 3800 },
+    { month: 'Jan', revenue: 90000, expenses: 67123 },
+    { month: 'Feb', revenue: 110000, expenses: 72123 },
+    { month: 'Mar', revenue: 85000, expenses: 88000 },
+    { month: 'Apr', revenue: 130000, expenses: 55000 },
+    { month: 'May', revenue: 125000, expenses: 66000 },
+    { month: 'Jun', revenue: 154000, expenses: 80000 },
   ]
 
   const hrData = [
@@ -530,12 +529,12 @@ function SearchParamsComponent() {
                                   <XAxis dataKey="year" />
                                   <YAxis 
                                     yAxisId="left"
-                                    tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k€`}
+                                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
                                   />
                                   <YAxis 
                                     yAxisId="right"
                                     orientation="right"
-                                    tickFormatter={(value: any) => `${value} Monate`}
+                                    tickFormatter={(value) => `${value} Monate`}
                                   />
                                   <Tooltip 
                                     formatter={(value: number, name: string) => {
@@ -615,11 +614,11 @@ function SearchParamsComponent() {
                                       <Cell key={`cell-${index}`} fill={color} />
                                     ))}
                                   </Pie>
-                                  <Tooltip
-                                    formatter={(value: any, name: any, props: any) => {
-                                      const description = props.payload?.[0]?.payload?.description ?? "N/A";
-                                      return [`${value}%`, `${name} (${description})`];
-                                    }}
+                                  <Tooltip 
+                                    formatter={(value: number, name: string, props: any) => [
+                                      `${value}%`,
+                                      `${name} (${props.payload.description})`
+                                    ]}
                                   />
                                 </RechartsPieChart>
                               </ResponsiveContainer>
