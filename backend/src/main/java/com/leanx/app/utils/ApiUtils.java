@@ -31,7 +31,7 @@ public class ApiUtils {
         response.getWriter().write(jsonResponse);
         response.getWriter().flush();
 
-        logger.log(Level.INFO, "JSON response sent successfully: {0}", jsonResponse);
+        // logger.log(Level.INFO, "JSON response sent successfully: {0}", jsonResponse);
     }
 
     public static void sendErrorResponse(HttpServletResponse response, int statusCode, String message) throws IOException {
@@ -43,7 +43,7 @@ public class ApiUtils {
         response.getWriter().write(jsonResponse);
         response.getWriter().flush();
 
-        logger.log(Level.WARNING, "Error response sent (Status: {0}): {1}", new Object[]{statusCode, message});
+        // logger.log(Level.WARNING, "Error response sent (Status: {0}): {1}", new Object[]{statusCode, message});
     }
 
     public static void sendExceptionResponse(HttpServletResponse response, String message, Exception e) throws IOException {
@@ -67,7 +67,7 @@ public class ApiUtils {
         RedirectResponse redirectResponse = new RedirectResponse(message, redirectUrl);
         objectMapper.writeValue(response.getWriter(), redirectResponse);
 
-        logger.log(Level.INFO, "Redirect response sent: {0} -> {1}", new Object[]{message, redirectUrl});
+        // logger.log(Level.INFO, "Redirect response sent: {0} -> {1}", new Object[]{message, redirectUrl});
     }
 
     private static class RedirectResponse {

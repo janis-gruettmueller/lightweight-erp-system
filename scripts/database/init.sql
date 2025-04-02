@@ -551,14 +551,15 @@ FOR EACH ROW
 BEGIN
     DECLARE lockout_duration INT;
 
-    IF NEW.status = 'LOCKED' THEN
+    -- Only update lock_until if the status is changing from NOT 'LOCKED' to 'LOCKED'
+    IF NEW.status = 'LOCKED' AND OLD.status <> 'LOCKED' THEN
         SELECT CAST(config_value AS UNSIGNED) INTO lockout_duration
         FROM configurations
         WHERE config_key = 'password.lockout_duration';
 
-		SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL lockout_duration MINUTE);
+        SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL lockout_duration MINUTE);
     END IF;
-END $$
+END $$ 
 
 /* ------------------------------- triggers for the HR Modul tables -------------------------------- */
 

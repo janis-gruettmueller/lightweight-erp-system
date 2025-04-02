@@ -2,11 +2,11 @@
 
 ## 1. Introduction
 
-**Purpose:** This database stores ... and supports ...
+**Purpose:** This document outlines the structure and purpose of the LeanX ERP-System database, which serves as the central repository for user, role, permission, configuration, audit, user history, employee, and payroll data, supporting change logging and automation.
 
-**Scope:** The database includes ...
+**Scope:** This database encompasses core system entities related to user management, access control, system settings, security, human resources, and payroll, the details of which are defined in the subsequent sections.
 
-**Target Audience:** Developers, DB Administrators
+**Target Audience:** Developers who interact with the database and DB Administrators.
 
 ## 2. Database Design
 
@@ -816,10 +816,16 @@
     BEFORE UPDATE ON users
     FOR EACH ROW
     BEGIN
-        IF NEW.status = 'LOCKED' THEN
-            SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL 30 MINUTE);
+        DECLARE lockout_duration INT;
+
+        IF NEW.status = 'LOCKED' AND OLD.status <> 'LOCKED' THEN
+            SELECT CAST(config_value AS UNSIGNED) INTO lockout_duration
+            FROM configurations
+            WHERE config_key = 'password.lockout_duration';
+
+            SET NEW.lock_until = DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL lockout_duration MINUTE);
         END IF;
-    END $$
+    END $$ 
 
     DELIMITER ;
     ```
@@ -1031,3 +1037,5 @@
 ---
 
 ## 5. Backup and Recovery
+
+Backups are currently managed by AWS that creates daily snapshots of the RDS instance.

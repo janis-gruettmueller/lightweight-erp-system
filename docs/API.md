@@ -1,18 +1,24 @@
-1. Authentication & Session Management (Auth Module)
+# API Documentation
 
-Handles user login/logout and session management.
+## 1. Introduction
 
-# Authentication API
+**Purpose:** This document defines the structure and functionality of the LeanX ERP-System backend API.
 
-This document describes the API endpoints for user authentication.
+**Scope:** The backend API currently handles authentication, employee management, and employee self-services.
 
-## Base URL
+**Target Audience:** Developers.
+
+## 2. Authentication & Session Management (Auth Controller)
+
+Handles user login/logout, password and session management.
+
+### Base URL
 
 `/api/auth`
 
-## Endpoints
+### Endpoints
 
-### 1. Check Session Status
+#### 2.1 Check Session Status
 
 * **Route:** `/api/auth/session`
 * **Method:** `GET`
@@ -46,7 +52,7 @@ This document describes the API endpoints for user authentication.
     ```
     Indicates an incorrect endpoint was requested.
 
-### 2. Login
+#### 2.2 Login
 
 * **Route:** `/api/auth/login`
 * **Method:** `POST`
@@ -64,6 +70,7 @@ This document describes the API endpoints for user authentication.
         }
         ```
     * **Example (Form Data or URL Encoded):**
+
         `username=testuser&password=securepassword`
 * **Response:**
 
@@ -125,7 +132,7 @@ This document describes the API endpoints for user authentication.
     ```
     Indicates that the provided credentials are incorrect or the account is locked or deactivated. The specific message will vary based on the reason for failure.
 
-### 3. Logout
+#### 2.3 Logout
 
 * **Route:** `/api/auth/logout`
 * **Method:** `POST`
@@ -137,11 +144,13 @@ This document describes the API endpoints for user authentication.
 
     **200 OK:**
     ```json
-    "Logout successful!"
+    {
+      "status": "Logout successful!"
+    }
     ```
     Indicates that the session has been successfully terminated. The `JSESSIONID` cookie will be invalidated.
 
-### 4. Change Password
+#### 2.4 Change Password
 
 * **Route:** `/api/auth/change-password`
 * **Method:** `POST`
@@ -166,7 +175,9 @@ This document describes the API endpoints for user authentication.
 
     **200 OK:**
     ```json
-    "Password changed successfully!"
+    {
+      "status": "Password changed successfully!"
+    }
     ```
     Indicates that the password has been successfully updated, and the session is invalidated (user will need to log in again with the new password).
 
@@ -212,3 +223,351 @@ This document describes the API endpoints for user authentication.
     }
     ```
     Indicates an unexpected error occurred on the server while attempting to change the password.
+
+## 3. Employee Management (Employee Controller)
+
+Handles the creation, retrieval, and modification of employee records.
+
+### Base URL
+
+`/api/employee`
+
+### Endpoints
+
+#### 3.1 Create Employee
+
+* **Route:** `/api/employee`
+* **Method:** `POST`
+* **Description:** Creates a new employee record.
+* **Request Body:**
+    * **Content-Type:** `application/json`
+    * **Request Body Schema:**
+        ```json
+        {
+          "firstName": "string",
+          "lastName": "string",
+          "email": "string",
+          "managerId": "integer"
+          // ... other employee fields
+        }
+        ```
+    * **Example:**
+        ```json
+        {
+          "firstName": "John",
+          "lastName": "Doe",
+          "email": "[email address removed]",
+          "managerId": 123
+        }
+        ```
+* **Response:**
+
+    **200 OK:**
+    ```json
+    {
+      "id": 1,
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "[email address removed]",
+      "managerId": 123,
+      "createdBy": 456
+      // ... other employee fields with generated ID and createdBy
+    }
+    ```
+    Indicates successful creation of the employee record. The response body contains the newly created employee object, including the generated ID and the ID of the user who created it (from the session).
+
+    **400 Bad Request:**
+    ```json
+    {
+      "message": "Missing required employee fields."
+    }
+    ```
+    or
+    ```json
+    {
+      "message": "Error creating the employee record!"
+    }
+    ```
+    Indicates that the request body is missing required fields or there was an error during the creation process.
+
+    **500 Internal Server Error:**
+    ```json
+    {
+      "message": "Database error occurred."
+      // ... other details if available
+    }
+    ```
+    Indicates a database error occurred during the operation.
+
+#### 3.2 Update Employee
+
+* **Route:** `/api/employee/{id}`
+* **Method:** `PUT`
+* **Description:** Updates an existing employee record with the specified ID.
+* **Path Parameter:**
+    * `{id}` (integer, required): The ID of the employee to update.
+* **Request Body:**
+    * **Content-Type:** `application/json`
+    * **Request Body Schema:**
+        ```json
+        {
+          "firstName": "string",
+          "lastName": "string",
+          "email": "string",
+          "managerId": "integer"
+          // ... other employee fields that need to be updated
+        }
+        ```
+    * **Example:**
+        ```json
+        {
+          "firstName": "Johnny",
+          "managerId": 456
+        }
+        ```
+* **Response:**
+
+    **200 OK:**
+    ```json
+    {
+      "id": 1,
+      "firstName": "Johnny",
+      "lastName": "Doe",
+      "email": "[email address removed]",
+      "managerId": 456,
+      "lastUpdatedBy": 789
+      // ... other updated employee fields with the ID of the user who updated it
+    }
+    ```
+    Indicates successful update of the employee record. The response body contains the updated employee object, including the ID of the user who performed the update.
+
+    **400 Bad Request:**
+    ```json
+    {
+      "message": "Invalid employee ID."
+    }
+    ```
+    Indicates that the provided employee ID in the path is not a valid integer.
+
+    **404 Not Found:**
+    ```json
+    {
+      "message": "Employee not found."
+    }
+    ```
+    Indicates that no employee record exists with the specified ID.
+
+    **500 Internal Server Error:**
+    ```json
+    {
+      "message": "Database error occurred."
+      // ... other details if available
+    }
+    ```
+    Indicates a database error occurred during the operation.
+
+#### 3.3 Get All Employees
+
+* **Route:** `/api/employee`
+* **Method:** `GET`
+* **Description:** Retrieves a list of all employee records.
+* **Request:**
+    * No request body or parameters.
+* **Response:**
+
+    **200 OK:**
+    ```json
+    [
+      {
+        "id": 1,
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "[email address removed]",
+        "managerId": 123
+        // ... other employee fields
+      },
+      {
+        "id": 2,
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "email": "[email address removed]",
+        "managerId": 123
+        // ... other employee fields
+      }
+      // ... more employee objects
+    ]
+    ```
+    Indicates successful retrieval of all employee records. The response body contains a JSON array of employee objects.
+
+    **500 Internal Server Error:**
+    ```json
+    {
+      "message": "Failed to fetch employees."
+      // ... other details if available
+    }
+    ```
+    Indicates a database error occurred while fetching the employees.
+
+#### 3.4 Search Employees by Name
+
+* **Route:** `/api/employee/search`
+* **Method:** `GET`
+* **Description:** Searches for employee records whose first or last name contains the provided query.
+* **Query Parameter:**
+    * `name` (string, required): The name or part of the name to search for.
+* **Request:**
+    * Example: `/api/employee/search?name=john`
+* **Response:**
+
+    **200 OK:**
+    ```json
+    [
+      {
+        "id": 1,
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "[email address removed]",
+        "managerId": 123
+        // ... other employee fields
+      },
+      {
+        "id": 3,
+        "firstName": "Johnathan",
+        "lastName": "Miller",
+        "email": "[email address removed]",
+        "managerId": 456
+        // ... other employee fields
+      }
+      // ... matching employee objects
+    ]
+    ```
+    Indicates successful retrieval of employee records matching the search query. The response body contains a JSON array of matching employee objects.
+
+    **400 Bad Request:**
+    ```json
+    {
+      "message": "Missing search query."
+    }
+    ```
+    Indicates that the `name` query parameter is missing or empty.
+
+    **500 Internal Server Error:**
+    ```json
+    {
+      "message": "Database error while searching employees."
+      // ... other details if available
+    }
+    ```
+    Indicates a database error occurred during the search operation.
+
+#### 3.5 Get Employee by ID
+
+* **Route:** `/api/employee/{id}`
+* **Method:** `GET`
+* **Description:** Retrieves a specific employee record by their ID.
+* **Path Parameter:**
+    * `{id}` (integer, required): The ID of the employee to retrieve.
+* **Request:**
+    * Example: `/api/employee/123`
+* **Response:**
+
+    **200 OK:**
+    ```json
+    {
+      "id": 123,
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "email": "[email address removed]",
+      "managerId": 789
+      // ... other employee fields
+    }
+    ```
+    Indicates successful retrieval of the employee record. The response body contains the requested employee object.
+
+    **400 Bad Request:**
+    ```json
+    {
+      "message": "Invalid employee ID format."
+    }
+    ```
+    Indicates that the provided employee ID in the path is not a valid integer.
+
+    **404 Not Found:**
+    ```json
+    {
+      "message": "Employee not found."
+    }
+    ```
+    Indicates that no employee record exists with the specified ID.
+
+    **500 Internal Server Error:**
+    ```json
+    {
+      "message": "Database error while fetching employee."
+      // ... other details if available
+    }
+    ```
+    Indicates a database error occurred while fetching the employee.
+
+## 4. Employee Self-Service (EmployeeSelfController)
+
+Handles the retrieval of personal employee information for the logged-in user.
+
+### Base URL
+
+`/api/employee/self`
+
+### Endpoints
+
+#### 4.1 Get Personal Employee Profile
+
+* **Route:** `/api/employee/self`
+* **Method:** `GET`
+* **Description:** Retrieves the personal employee profile for the currently logged-in user.
+* **Request:**
+    * No request body.
+    * A valid `JSESSIONID` cookie should be present in the request headers, identifying the logged-in user. The `userId` attribute from the session is used to fetch the profile.
+* **Response:**
+
+    **200 OK:**
+    ```json
+    {
+      "id": 456,
+      "firstName": "Current",
+      "lastName": "User",
+      "email": "[email address removed]",
+      "managerFirstName": "Jane",
+      "managerLastName": "Doe",
+      "jobTitle": "Senior Developer",
+      "department": "IT",
+      "employmentType": "FULL_TIME",
+      "employmentStatus": "ACTIVE",
+      "startDate": "2024-01-15"
+    }
+    ```
+    Indicates successful retrieval of the personal employee profile. The response body contains the employee profile information for the logged-in user.
+
+    **400 Bad Request:**
+    ```json
+    {
+      "message": "Error fetching personal employee profile!"
+    }
+    ```
+    Indicates an error occurred while fetching the personal employee profile, possibly due to an invalid user ID in the session.
+
+    **404 Not Found:**
+    ```json
+    {
+      "message": "Unknown endpoint!"
+    }
+    ```
+    Indicates an incorrect endpoint was requested under `/api/employee/self`.
+
+    **500 Internal Server Error:**
+    ```json
+    {
+      "message": "Database error occurred."
+      // ... other details if available
+    }
+    ```
+    Indicates a database error occurred during the operation.
