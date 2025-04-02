@@ -38,6 +38,10 @@ def parse_rss_feed(xml_data):
         
         pub_date = item.find("ns:pubDate", namespace).text if item.find("ns:pubDate", namespace) is not None else ""
         deadline = extract_deadline(description)
+
+         # --- Ensure proper representation of special characters ---
+        title = title.encode('latin-1', 'ignore').decode('utf-8')
+        description = description.encode('latin-1', 'ignore').decode('utf-8')
         
         tenders.append({
             "title": title,
