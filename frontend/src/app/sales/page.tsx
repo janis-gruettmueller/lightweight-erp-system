@@ -103,7 +103,7 @@ export default withAuth(function SalesPage() {
       <DashboardLayout>
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight">Ausschreibungs-Portal</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Ausschreibungsportal</h2>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="icon">
                 <Bell className="h-4 w-4" />

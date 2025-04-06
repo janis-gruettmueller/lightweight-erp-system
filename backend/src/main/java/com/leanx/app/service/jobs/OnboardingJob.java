@@ -16,6 +16,12 @@ import com.leanx.app.service.modules.system.EmailService;
 import com.leanx.app.service.modules.user.admin.UserService;
 import com.leanx.app.utils.PasswordUtils;
 
+/**
+ * Quartz job that handles the onboarding process for new employees who are
+ * scheduled to start on the current day. This job retrieves a list of new
+ * employees, generates a username and password for each, creates a new user
+ * account in the system, and sends an email containing their login credentials.
+ */
 public class OnboardingJob implements Job {
 
     private static final Logger logger = Logger.getLogger(OnboardingJob.class.getName());
@@ -35,7 +41,7 @@ public class OnboardingJob implements Job {
                 logger.log(Level.INFO, "Successfully Executed Onboarding Job. No new users were created!");
                 return;
             }
-            
+
             boolean isEmailSent = true;
             for (Employee employee : newEmployees) {
                 String username = userService.generateUsername(employee.getFirstName(), employee.getLastName());
@@ -58,6 +64,7 @@ public class OnboardingJob implements Job {
             logger.log(Level.INFO, "Successfully Executed Onboarding Job. {0} new users were created!", newEmployees.size());
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Failed to execute the Onboarding Job. Error accessing the database: {0}", e);
+            throw new JobExecutionException("Error during Onboarding Job execution: " + e.getMessage(), e);
         }
     }
 }

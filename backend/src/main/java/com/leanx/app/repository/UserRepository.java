@@ -16,10 +16,22 @@ import com.leanx.app.model.entity.User.UserType;
 import com.leanx.app.repository.base.CrudRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
+/**
+ * Repository class for performing CRUD (Create, Read, Update, Delete) operations
+ * and other queries on {@link User} entities in the database.
+ */
 public class UserRepository implements CrudRepository<User> {
 
     private static final Logger logger = Logger.getLogger(UserRepository.class.getName());
 
+    /**
+     * Creates a new user record in the database.
+     *
+     * @param user The {@link User} object containing the data for the new record.
+     * @return The number of rows affected by the insert operation (should be 1 on success).
+     * @throws IllegalArgumentException If the provided {@code user} object is null.
+     * @throws SQLException             If a database access error occurs during the creation.
+     */
     @Override
     public int create(User user) throws IllegalArgumentException, SQLException {
         if (user == null) {
@@ -45,6 +57,14 @@ public class UserRepository implements CrudRepository<User> {
         }
     }
 
+    /**
+     * Retrieves a user record from the database based on its unique ID.
+     *
+     * @param id The ID of the user to retrieve.
+     * @return A {@link User} object representing the retrieved record, or {@code null}
+     * if no user with the given ID exists.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     @Override
     public User read(Integer id) throws SQLException {
         String sql = "SELECT * FROM users WHERE id = ?";
@@ -88,6 +108,16 @@ public class UserRepository implements CrudRepository<User> {
         }
     }
 
+    /**
+     * Updates specific fields of an existing user record in the database.
+     *
+     * @param id      The ID of the user record to update.
+     * @param updates A {@code Map} where the keys are the column names to update
+     * and the values are the new values for those columns.
+     * @return The number of rows affected by the update operation (should be 1 on success).
+     * @throws IllegalArgumentException If the provided {@code updates} map is null or empty.
+     * @throws SQLException             If a database access error occurs during the update.
+     */
     @Override
     public int update(Integer id, Map<String, Object> updates) throws IllegalArgumentException, SQLException {
         if (updates == null || updates.isEmpty()) {
@@ -117,8 +147,19 @@ public class UserRepository implements CrudRepository<User> {
         }
     }
 
+    /**
+     * Deletes a user record from the database based on its unique ID.
+     *
+     * @param id The ID of the user record to delete.
+     * @return The number of rows affected by the delete operation (should be 1 on success).
+     * @throws IllegalArgumentException If the provided {@code id} is null or not positive.
+     * @throws SQLException             If a database access error occurs during the deletion.
+     */
     @Override
     public int delete(Integer id) throws IllegalArgumentException, SQLException {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Invalid user ID.");
+        }
         String sql = "DELETE FROM users WHERE id = ?";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
@@ -132,23 +173,40 @@ public class UserRepository implements CrudRepository<User> {
 
     }
 
+    /**
+     * Retrieves all user records from the database.
+     *
+     * @return A {@code List} containing all {@link User} objects in the database.
+     * Returns an empty list if no users are found.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     @Override
     public List<User> findAll() throws SQLException {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT * FROM users";
+        String sql = "SELECT id FROM users"; // Fetch only IDs for efficiency
 
         try (java.sql.Connection connection = DatabaseUtils.getMySQLConnection();
-             java.sql.PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    users.add(read(rs.getInt("id")));
+             java.sql.PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                User user = read(rs.getInt("id"));
+                if (user != null) {
+                    users.add(user);
                 }
             }
         }
-        
+
         return users;
     }
 
+    /**
+     * Retrieves a user record from the database based on their unique username.
+     *
+     * @param name The username of the user to retrieve.
+     * @return A {@link User} object representing the retrieved record, or {@code null}
+     * if no user with the given username exists.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     public User read(String name) throws SQLException {
         String sql = "SELECT * FROM users WHERE name = ?";
 

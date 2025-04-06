@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
-// Generisches CRUD Repository Interface
+// Generic CRUD Repository Interface
 public interface CrudRepository<T> {
 
     /**

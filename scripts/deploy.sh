@@ -54,6 +54,9 @@ ssh -i $TEMP_SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_ELASTIC_IP << EO
   echo "Set correct permissions for .env file..."
   [ -f .env ] && sudo chmod 644 .env
 
+  echo "Removing unused images..."
+  sudo docker image prune -f
+
   echo "Pulling latest Docker images..."
   sudo docker-compose pull
 

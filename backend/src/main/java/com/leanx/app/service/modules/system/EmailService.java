@@ -9,9 +9,13 @@ import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
+import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
+/**
+ * Service class responsible for sending emails
+ */
 public class EmailService {
 
     private static final Logger logger = Logger.getLogger(EmailService.class.getName());
@@ -24,9 +28,22 @@ public class EmailService {
     private static final int MAX_RETRIES = 3; // Maximum number of retry attempts
     private static final long BACKOFF_DELAY = 60000; // 1 minute in milliseconds
 
+    /**
+     * Attempts to send an email containing login credentials to a new user.
+     * This method implements a retry mechanism to handle potential transient
+     * issues with the email service. It will attempt to send the email up to
+     * {@link #MAX_RETRIES} times, with a delay of {@link #BACKOFF_DELAY}
+     * milliseconds between retries.
+     *
+     * @param to       The recipient's email address.
+     * @param username The username of the new account.
+     * @param password The temporary password for the new account.
+     * @return 0 if the email was sent successfully, -1 if all retry attempts failed
+     * or if the retry process was interrupted.
+     */
     public int attemptSendCredentialsEmail(String to, String username, String password) {
         int retryCount = 0;
-    
+
         while (retryCount < MAX_RETRIES) {
             try {
                 sendCredentialsEmail(to, username, password);
@@ -35,7 +52,7 @@ public class EmailService {
             } catch (MessagingException e) {
                 retryCount++;
                 logger.log(Level.SEVERE, "Attempt {0} - Failed to send email to {1}: {2}", new Object[]{retryCount, to, e.getMessage(), e});
-    
+
                 if (retryCount < MAX_RETRIES) {
                     if (!sleepBeforeRetry()) {
                         return -1; // Interrupted, exit early
@@ -48,7 +65,14 @@ public class EmailService {
         }
         return -1;
     }
-    
+
+    /**
+     * Pauses the current thread for a predefined duration before attempting
+     * to retry sending the email.
+     *
+     * @return {@code true} if the thread slept without interruption, {@code false}
+     * if the sleep was interrupted.
+     */
     private boolean sleepBeforeRetry() {
         try {
             logger.log(Level.WARNING, "Retrying in {0} milliseconds...", BACKOFF_DELAY);
@@ -61,6 +85,16 @@ public class EmailService {
         }
     }
 
+    /**
+     * Sends an email containing the new user's login credentials to the specified
+     * email address. The email includes the username, temporary password, and a
+     * link to the LeanX login page. The email is formatted as HTML.
+     *
+     * @param to       The recipient's email address.
+     * @param username The username of the new account.
+     * @param password The temporary password for the new account.
+     * @throws MessagingException If an error occurs while preparing or sending the email.
+     */
     private void sendCredentialsEmail(String to, String username, String password) throws MessagingException {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
@@ -112,7 +146,7 @@ public class EmailService {
             // Set the content of the message as HTML
             message.setContent(messageBody, "text/html; charset=utf-8");
 
-            jakarta.mail.Transport.send(message);
+            Transport.send(message);
         } catch (MessagingException e) {
             throw e;
         }

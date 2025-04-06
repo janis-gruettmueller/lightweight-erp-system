@@ -1,7 +1,6 @@
 package com.leanx.app.utils;
 
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.Map;
 import java.util.Random;
 
@@ -9,6 +8,11 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import com.leanx.app.service.modules.system.configs.SecurityConfig;
 
+/**
+ * Utility class for handling password-related operations, including validation,
+ * generation, hashing, and checking against a password policy defined in
+ * the {@link SecurityConfig}.
+ */
 public class PasswordUtils {
 
     private final Map<String, String> PASSWORD_SETTINGS = SecurityConfig.PASSWORD_SETTINGS;
@@ -23,6 +27,10 @@ public class PasswordUtils {
     private final boolean requireNumber;
     private final boolean requireSpecialCharacter;
 
+    /**
+     * Constructs a new {@code PasswordUtils} instance, initializing password
+     * policy settings from the {@link SecurityConfig#PASSWORD_SETTINGS} map.
+     */
     public PasswordUtils() {
         this.maxNumFailedAttempts = Integer.parseInt(PASSWORD_SETTINGS.get("password.num_failed_attempts_before_lockout"));
         this.historySize = Integer.parseInt(PASSWORD_SETTINGS.get("password.history_size"));
@@ -35,25 +43,90 @@ public class PasswordUtils {
         this.lockoutDuration = Integer.parseInt(PASSWORD_SETTINGS.get("password.lockout_duration"));
     }
 
+    /**
+     * Returns the maximum number of failed login attempts allowed before lockout.
+     * This value is configured by the 'password.num_failed_attempts_before_lockout' setting.
+     *
+     * @return The maximum number of failed attempts.
+     */
     public int getMaxNumFailedAttempts() { return maxNumFailedAttempts; }
+
+    /**
+     * Returns the size of the password history to maintain for preventing reuse.
+     * This value is configured by the 'password.history_size' setting.
+     *
+     * @return The password history size.
+     */
     public int getHistorySize() { return historySize; }
+
+    /**
+     * Returns the minimum required length for a password.
+     * This value is configured by the 'password.min_length' setting.
+     *
+     * @return The minimum password length.
+     */
     public int getMinLength() { return minLength; }
+
+    /**
+     * Returns the maximum allowed length for a password.
+     * This value is configured by the 'password.max_length' setting.
+     *
+     * @return The maximum password length.
+     */
     public int getMaxLength() { return maxLength; }
+
+    /**
+     * Returns the duration in minutes for which an account is locked out
+     * after exceeding the maximum number of failed login attempts.
+     * This value is configured by the 'password.lockout_duration' setting.
+     *
+     * @return The lockout duration.
+     */
     public int getLockoutDuration() { return lockoutDuration; }
+
+    /**
+     * Indicates whether the password policy requires at least one uppercase letter.
+     * This value is configured by the 'password.require_uppercase' setting.
+     *
+     * @return {@code true} if uppercase letters are required, {@code false} otherwise.
+     */
     public boolean isRequireUppercase() { return requireUppercase; }
+
+    /**
+     * Indicates whether the password policy requires at least one lowercase letter.
+     * This value is configured by the 'password.require_lowercase' setting.
+     *
+     * @return {@code true} if lowercase letters are required, {@code false} otherwise.
+     */
     public boolean isRequireLowercase() { return requireLowercase; }
+
+    /**
+     * Indicates whether the password policy requires at least one digit (number).
+     * This value is configured by the 'password.require_numbers' setting.
+     *
+     * @return {@code true} if numbers are required, {@code false} otherwise.
+     */
     public boolean isRequireNumber() { return requireNumber; }
+
+    /**
+     * Indicates whether the password policy requires at least one special character
+     * (e.g., !@#$%&*.).
+     * This value is configured by the 'password.require_special_characters' setting.
+     *
+     * @return {@code true} if special characters are required, {@code false} otherwise.
+     */
     public boolean isRequireSpecialCharacter() { return requireSpecialCharacter; }
 
 
     /**
-     * Validates if the given password meets the required password policy.
-     * The password must meet the specified criteria like minimum length, maximum length, required uppercase letters,
-     * lowercase letters, numbers, and special characters.
+     * Validates if the given password meets the configured password policy.
+     * The password must satisfy constraints such as minimum and maximum length,
+     * and the presence of required character types (uppercase, lowercase, numbers,
+     * and special characters) as defined in the security configuration.
      *
-     * @param newPassword The new password to be validated.
-     * @return {@code true} if the password is valid, {@code false} otherwise.
-     * @throws SQLException If a database error occurs while checking the password history.
+     * @param newPassword The password to be validated.
+     * @return {@code true} if the password meets all the policy requirements,
+     * {@code false} otherwise.
      */
     public boolean isValidPassword(String newPassword) {
         if (newPassword == null || newPassword.isEmpty()) {
@@ -79,6 +152,14 @@ public class PasswordUtils {
         return !(this.requireSpecialCharacter && !newPassword.matches(".*[!@#$%&*.].*"));
     }
 
+    /**
+     * Generates a random password that complies with the configured password policy.
+     * It repeatedly generates random strings until one satisfies the criteria defined
+     * by {@link #isValidPassword(String)}.
+     *
+     * @return A randomly generated password that meets the password policy requirements.
+     * Returns {@code null} if the configured policy results in an empty set of allowed characters.
+     */
     public String generatePassword() {
         String password;
         do {
@@ -88,6 +169,13 @@ public class PasswordUtils {
         return password;
     }
 
+    /**
+     * Generates a random string based on the enabled password requirements
+     * (uppercase, lowercase, numbers, special characters) and the minimum required length.
+     *
+     * @return A randomly generated string containing characters based on the password policy.
+     * Returns {@code null} if no character types are required by the policy.
+     */
     private String generateRandomString() {
         String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         String lower = "abcdefghijklmnopqrstuvwxyz";
@@ -115,7 +203,7 @@ public class PasswordUtils {
             return null;
         }
 
-        for (int i = 0; i <= this.minLength; i++) {
+        for (int i = 0; i < this.minLength; i++) {
             int randomIndex = random.nextInt(allChars.length());
             sb.append(allChars.charAt(randomIndex));
         }
@@ -124,21 +212,25 @@ public class PasswordUtils {
     }
 
     /**
-     * Hashes the plain text password using BCrypt.
+     * Hashes the provided plain text password using the BCrypt hashing algorithm.
+     * BCrypt is a strong hashing function that includes salting to protect against
+     * rainbow table attacks.
      *
-     * @param plainTextPassword The plain text password.
-     * @return The hashed password.
+     * @param plainTextPassword The password to be hashed.
+     * @return The BCrypt hashed version of the password.
      */
     public String hashPassword(String plainTextPassword) {
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
     }
 
     /**
-     * Checks if the provided plain text password matches the hashed password.
+     * Verifies if the given plain text password matches the provided BCrypt hashed password.
+     * This method uses the BCrypt library's built-in checking function, which handles
+     * the salt and hashing process internally.
      *
-     * @param plainTextPassword The plain text password.
-     * @param hashedPassword    The password hash of the user object.
-     * @return {@code true} if passwords match, {@code false} otherwise.
+     * @param plainTextPassword The plain text password to check.
+     * @param hashedPassword    The BCrypt hashed password to compare against.
+     * @return {@code true} if the plain text password matches the hash, {@code false} otherwise.
      */
     public boolean checkPassword(String plainTextPassword, String hashedPassword) {
         return BCrypt.checkpw(plainTextPassword, hashedPassword);

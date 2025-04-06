@@ -16,10 +16,22 @@ import com.leanx.app.model.entity.Employee.EmploymentType;
 import com.leanx.app.repository.base.CrudRepository;
 import com.leanx.app.utils.DatabaseUtils;
 
+/**
+ * Repository class for performing CRUD (Create, Read, Update, Delete) operations
+ * and other queries on {@link Employee} entities in the database.
+ */
 public class EmployeeRepository implements CrudRepository<Employee> {
 
     private static final Logger logger = Logger.getLogger(EmployeeRepository.class.getName());
 
+    /**
+     * Creates a new employee record in the database.
+     *
+     * @param employee The {@link Employee} object containing the data for the new record.
+     * @return The number of rows affected by the insert operation (should be 1 on success).
+     * @throws IllegalArgumentException If the provided {@code employee} object is null.
+     * @throws SQLException             If a database access error occurs during the creation.
+     */
     @Override
     public int create(Employee employee) throws IllegalArgumentException, SQLException {
         if (employee == null) {
@@ -50,6 +62,14 @@ public class EmployeeRepository implements CrudRepository<Employee> {
         }
     }
 
+    /**
+     * Retrieves an employee record from the database based on its unique ID.
+     *
+     * @param id The ID of the employee to retrieve.
+     * @return An {@link Employee} object representing the retrieved record, or {@code null}
+     * if no employee with the given ID exists.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     @Override
     public Employee read(Integer id) throws SQLException {
         String sql = "SELECT * FROM employees WHERE id = ?";
@@ -95,6 +115,16 @@ public class EmployeeRepository implements CrudRepository<Employee> {
         }
     }
 
+    /**
+     * Updates specific fields of an existing employee record in the database.
+     *
+     * @param id      The ID of the employee record to update.
+     * @param updates A {@code Map} where the keys are the column names to update
+     * and the values are the new values for those columns.
+     * @return The number of rows affected by the update operation (should be 1 on success).
+     * @throws IllegalArgumentException If the provided {@code updates} map is null or empty.
+     * @throws SQLException             If a database access error occurs during the update.
+     */
     @Override
     public int update(Integer id, Map<String, Object> updates) throws IllegalArgumentException, SQLException {
         if (updates == null || updates.isEmpty()) {
@@ -124,8 +154,19 @@ public class EmployeeRepository implements CrudRepository<Employee> {
         }
     }
 
+    /**
+     * Deletes an employee record from the database based on its unique ID.
+     *
+     * @param id The ID of the employee record to delete.
+     * @return The number of rows affected by the delete operation (should be 1 on success).
+     * @throws IllegalArgumentException If the provided {@code id} is null or not positive.
+     * @throws SQLException             If a database access error occurs during the deletion.
+     */
     @Override
     public int delete(Integer id) throws IllegalArgumentException, SQLException {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Invalid employee ID.");
+        }
         String sql = "DELETE FROM employees WHERE id = ?";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
@@ -138,46 +179,71 @@ public class EmployeeRepository implements CrudRepository<Employee> {
         }
     }
 
+    /**
+     * Retrieves all employee records from the database.
+     *
+     * @return A {@code List} containing all {@link Employee} objects in the database.
+     * Returns an empty list if no employees are found.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     @Override
     public List<Employee> findAll() throws SQLException {
         List<Employee> employees = new ArrayList<>();
-        String sql = "SELECT * FROM employees";
+        String sql = "SELECT id FROM employees"; // Only fetch IDs for efficiency
 
         try (Connection connection = DatabaseUtils.getMySQLConnection();
-             PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    employees.add(read(rs.getInt("id")));
+             PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                Employee employee = read(rs.getInt("id"));
+                if (employee != null) {
+                    employees.add(employee);
                 }
             }
         }
         return employees;
     }
 
+    /**
+     * Retrieves a list of employees whose start date is the current date.
+     *
+     * @return A {@code List} of {@link Employee} objects who are scheduled to start today.
+     * Returns an empty list if no employees are starting today.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     public List<Employee> findStartingToday() throws SQLException {
         List<Employee> employees = new ArrayList<>();
-        String sql = "SELECT * FROM employees WHERE start_date = CURDATE()";
+        String sql = "SELECT id, first_name, last_name, email FROM employees WHERE start_date = CURDATE()";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
              PreparedStatement stmt = c.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                employees.add(new Employee(
-                        rs.getInt("id"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email")
-                ));
+                Employee employee = new Employee();
+                employee.setId(rs.getInt("id"));
+                employee.setFirstName(rs.getString("first_name"));
+                employee.setLastName(rs.getString("last_name"));
+                employee.setEmail(rs.getString("email"));
+                employees.add(employee);
             }
         }
 
         return employees;
     }
 
+    /**
+     * Searches for employees whose first or last name contains the given name.
+     * The search is case-insensitive and uses a "LIKE %value%" pattern.
+     *
+     * @param name The name (or part of a name) to search for.
+     * @return A {@code List} of {@link Employee} objects whose first or last name
+     * contains the search term. Returns an empty list if no matches are found.
+     * @throws SQLException If a database access error occurs during the search.
+     */
     public List<Employee> findByName(String name) throws SQLException {
         List<Employee> employees = new ArrayList<>();
-        String sql = "SELECT id, first_name, last_name, email FROM employees WHERE first_name LIKE ? OR last_name LIKE ?";
+        String sql = "SELECT id, first_name, last_name, email FROM employees WHERE LOWER(first_name) LIKE LOWER(?) OR LOWER(last_name) LIKE LOWER(?)";
 
         try (Connection c = DatabaseUtils.getMySQLConnection();
              PreparedStatement stmt = c.prepareStatement(sql)) {
@@ -187,18 +253,27 @@ public class EmployeeRepository implements CrudRepository<Employee> {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    employees.add(new Employee(
-                        rs.getInt("id"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email")
-                    ));
+                    Employee employee = new Employee();
+                    employee.setId(rs.getInt("id"));
+                    employee.setFirstName(rs.getString("first_name"));
+                    employee.setLastName(rs.getString("last_name"));
+                    employee.setEmail(rs.getString("email"));
+                    employees.add(employee);
                 }
             }
         }
         return employees;
     }
 
+    /**
+     * Retrieves a basic employee information (ID, first name, last name, email)
+     * based on the employee's ID.
+     *
+     * @param id The ID of the employee to retrieve.
+     * @return An {@link Employee} object containing basic information, or {@code null}
+     * if no employee with the given ID is found.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     public Employee findById(Integer id) throws SQLException {
         String sql = "SELECT id, first_name, last_name, email FROM employees WHERE id = ?";
 
@@ -209,18 +284,27 @@ public class EmployeeRepository implements CrudRepository<Employee> {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Employee(
-                        rs.getInt("id"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email")
-                    );
+                    Employee employee = new Employee();
+                    employee.setId(rs.getInt("id"));
+                    employee.setFirstName(rs.getString("first_name"));
+                    employee.setLastName(rs.getString("last_name"));
+                    employee.setEmail(rs.getString("email"));
+                    return employee;
                 }
             }
         }
         return null;
     }
 
+    /**
+     * Retrieves the first and last name of an employee based on their ID.
+     *
+     * @param id The ID of the employee.
+     * @return A {@code List} containing two elements: the first name at index 0
+     * and the last name at index 1. Returns an empty list if no employee
+     * with the given ID is found.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     public List<String> findNameById(Integer id) throws SQLException {
         List<String> name = new ArrayList<>();
         String sql = "SELECT first_name, last_name FROM employees WHERE id = ?";
@@ -238,6 +322,15 @@ public class EmployeeRepository implements CrudRepository<Employee> {
         return name;
     }
 
+    /**
+     * Retrieves a list of IDs of employees who directly report to the given manager.
+     *
+     * @param managerId The ID of the manager.
+     * @return A {@code List} of employee IDs who are direct subordinates of the manager.
+     * Returns an empty list if the manager has no direct reports or if the
+     * manager ID is invalid.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     public List<Integer> findDirectSubordinates(Integer managerId) throws SQLException {
         List<Integer> subordinates = new ArrayList<>();
         String sql = "SELECT id FROM employees WHERE manager_id = ?";
@@ -254,16 +347,26 @@ public class EmployeeRepository implements CrudRepository<Employee> {
         return subordinates;
     }
 
+    /**
+     * Retrieves a list of IDs of all employees who are direct or indirect
+     * subordinates of the given manager using a recursive common table expression (CTE).
+     *
+     * @param managerId The ID of the top-level manager.
+     * @return A {@code List} of employee IDs who are subordinates (direct or indirect)
+     * of the manager. Returns an empty list if the manager has no subordinates
+     * or if the manager ID is invalid.
+     * @throws SQLException If a database access error occurs during the retrieval.
+     */
     public List<Integer> findAllSubordinates(Integer managerId) throws SQLException {
-        List<Integer> subordinates = new ArrayList<>();  
-        // recursive call to get all indirect subordinates
+        List<Integer> subordinates = new ArrayList<>();
+        // Recursive CTE to get all indirect subordinates
         String sql = "WITH RECURSIVE Subordinates AS (" +
                     "    SELECT id FROM employees WHERE manager_id = ?" +
                     "    UNION ALL" +
                     "    SELECT e.id FROM employees e INNER JOIN Subordinates s ON s.id = e.manager_id" +
                     ")" +
                     "SELECT id FROM Subordinates";
-        
+
         try (Connection c = DatabaseUtils.getMySQLConnection();
             PreparedStatement stmt = c.prepareStatement(sql)) {
             stmt.setInt(1, managerId);
