@@ -1,5 +1,11 @@
 # LeanX ERP-System
 
+## ⚠️ Project Deprecation Notice
+
+This project is no longer actively maintained, and the associated web address is no longer hosted or updated.
+The repository is preserved for reference purposes only.
+No further updates, bug fixes, or deployments will be made. Use at your own discretion.
+
 ## Introduction
 
 LeanX is a lightweight ERP system designed for efficient management of core business processes. This document provides an overview of the system's architecture, API, setup and database.
